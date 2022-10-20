@@ -1,3 +1,9 @@
+## Basic functioning
+
+## Nomenclature
+
+## Main functions (entry points)
+
 ## --TO DO--
 - test the investor addition to the contract
 - test constructor
