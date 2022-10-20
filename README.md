@@ -5,6 +5,7 @@
 ## Main functions (entry points)
 
 ## --TO DO--
+- write the previous points in this file
 - test the investor addition to the contract
 - test constructor
 - check safety of modifiers and functions
