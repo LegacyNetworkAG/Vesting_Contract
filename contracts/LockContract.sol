@@ -47,18 +47,18 @@ contract LockContract is Context, Ownable  {
 
     //Variables
     address[] investor_address;// array with all the investor aaddresses
-    address[] addresses_U50I;
     address[] addresses_O50I;
-    uint256[] tokens_U50I;
+    address[] addresses_O250I;
     uint256[] tokens_O50I;
+    uint256[] tokens_O250I;
     uint8[] percent_per_milestone;
     uint256 initLock;// initial lock period (2 years)
     uint256 erc20Released;// total amount of released tokens
     uint256 numMilestones;// number of milestones (number of payments for each Investor)
-    uint256 num_U50I;// number of under 50k token vested investors
-    uint256 num_O50I;// number of over 50k token vested investors
-    uint256 totalTokens_U50I;// total tokens promised to investors with less than 50k tokens vested
-    uint256 totalTokens_O50I;// total tokens promised to investors with more than 50k tokens vested
+    uint256 num_O50I;// number of under 50k token vested investors
+    uint256 num_O250I;// number of over 50k token vested investors
+    uint256 totalTokens_O50I;// total tokens promised to investors with 50k-250k tokens vested
+    uint256 totalTokens_O250I;// total tokens promised to investors with more than 250k tokens vested
     uint256 leftover;// tokens destined to new employess
     address token;// token address
 
@@ -68,15 +68,15 @@ contract LockContract is Context, Ownable  {
      */
     constructor(
         IERC20 _legacy_token,
-        address[] memory _addresses_U50I,
         address[] memory _addresses_O50I,
-        uint256[] memory _tokens_U50I,
+        address[] memory _addresses_O250I,
         uint256[] memory _tokens_O50I,
+        uint256[] memory _tokens_O250I,
         uint8[] memory _percent_per_milestone,
         uint256 _numMilestones,
         uint256 _initLock,
-        uint256 _tokens_U50ITotal,// sum all the tokens for the investors with less than 50k tokens
-        uint256 _tokens_O50ITotal,// ... more than 50k tokens
+        uint256 _tokens_O50ITotal,// sum all the tokens for the investors with with 50k-250k tokens vested
+        uint256 _tokens_O250ITotal,// ... more than 250k tokens
         address _tokenAdress
     ) {
 
@@ -88,31 +88,31 @@ contract LockContract is Context, Ownable  {
         percent_per_milestone = _percent_per_milestone;
 
         // number of investors with...
-        num_U50I = _addresses_U50I.length;// less than 50k tokens vested
-        num_O50I = _addresses_O50I.length;// more than 50k tokens vested
+        num_O50I = _addresses_O50I.length;// with 50k-250k tokens vested
+        num_O250I = _addresses_O250I.length;// more than 250k tokens vested
 
         // array of addresses of investors with ...
-        addresses_U50I= _addresses_U50I;// less than 50k tokens vested
-        addresses_O50I= _addresses_O50I;// more than 50k tokens vested
+        addresses_O50I= _addresses_O50I;// with 50k-250k tokens vested
+        addresses_O250I= _addresses_O250I;// more than 250k tokens vested
 
         // array of tokens promised to investors with ...
-        tokens_U50I = _tokens_U50I;// less than 50k tokens vested
-        tokens_O50I = _tokens_O50I;// more than 50k tokens vested
+        tokens_O50I = _tokens_O50I;// with 50k-250k tokens vested
+        tokens_O250I = _tokens_O250I;// more than 250k tokens vested
 
         // total tokens promised to investors with ...
-        totalTokens_U50I = _tokens_U50ITotal;// less than 50k tokens vested
-        totalTokens_O50I = _tokens_O50ITotal;// more than 50k tokens vested
+        totalTokens_O50I = _tokens_O50ITotal;// with 50k-250k tokens vested
+        totalTokens_O250I = _tokens_O250ITotal;// more than 250k tokens vested
 
         // create an Investor struct for each investor with less than 50k tokens
-        for (uint i=0; i<num_U50I; i++){
+        for (uint i=0; i<num_O50I; i++){
 
             // Investor address can't be the zero address
-            require(addresses_U50I[i] != address(0),
+            require(addresses_O50I[i] != address(0),
                      "Constructor: locked Investor address is zero address");
 
             // get the amount of tokens and the address correpsonding to this investor
-            address _investor_address = addresses_U50I[i];
-            uint256 _investor_tokens = tokens_U50I[i];
+            address _investor_address = addresses_O50I[i];
+            uint256 _investor_tokens = tokens_O50I[i];
            
             // create the new Investor struct
             Investor memory investor = Investor(_investor_address, 
@@ -127,16 +127,16 @@ contract LockContract is Context, Ownable  {
 
         }
 
-        // create an Investor struct for each investor with more than 50k tokens
-        for (uint i=0; i<num_O50I; i++){
+        // create an Investor struct for each investor with more than 250k tokens
+        for (uint i=0; i<num_O250I; i++){
 
             // Investor address can't be the zero address
-            require(addresses_O50I[i] != address(0),
+            require(addresses_O250I[i] != address(0),
                      "Constructor: locked Investor address is zero address");
 
             // get the amount of tokens and the address correpsonding to this investor
-            address _investor_address = addresses_O50I[i];
-            uint256 _investor_tokens = tokens_O50I[i];
+            address _investor_address = addresses_O250I[i];
+            uint256 _investor_tokens = tokens_O250I[i];
            
             // create the new Investor struct
             Investor memory investor = Investor(_investor_address, 
@@ -224,14 +224,14 @@ contract LockContract is Context, Ownable  {
     /**
      * @dev Adds a new Investor.
      */
-    function new_Investor(uint256 _amount, address _newInvestor_address, bool _under50K) public onlyOwner{
+    function new_Investor(uint256 _amount, address _newInvestor_address, bool _under250K) public onlyOwner{
 
-        if(_under50K){
-            addresses_U50I.push(_newInvestor_address);
-            tokens_U50I.push(_amount);
-        }else{
-            addresses_O50I.push();
+        if(_under250K){
+            addresses_O50I.push(_newInvestor_address);
             tokens_O50I.push(_amount);
+        }else{
+            addresses_O250I.push();
+            tokens_O250I.push(_amount);
         }
 
         // create the new Investor struc

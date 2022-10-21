@@ -14,17 +14,17 @@ def deploy_lock_contract(connector, _wallet,_wallet_address, _wallet2_address):
 
     #Constructor variables
     addresses_U50I = ['']
-    addresses_O50I = ['']
+    addresses_O250I = ['']
     tokens_U50I=[1*10**(18),
                 1*10**(18),
                 1*10**(18)]
-    tokens_O50I=[1*10**(18),
+    tokens_O250I=[1*10**(18),
                 1*10**(18),
                 1*10**(18)]
     percent_per_milestone=[]
     initLock = 1224235235235
     tokens_U50ITotal = tokens_U50I.sum()
-    tokens_O50ITotal = tokens_O50I.sum()
+    tokens_O250ITotal = tokens_O250I.sum()
     tokenAdress = "0xee257dA9686d1531c6b8d18E053D4701c6F1e554"
 
     #Deploy
@@ -34,9 +34,9 @@ def deploy_lock_contract(connector, _wallet,_wallet_address, _wallet2_address):
                                         'uint256[]', 'uint256[]','uint8[]',
                                         'uint256','uint256','uint256',
                                         'address'],
-                                        [addresses_U50I, addresses_O50I,
-                                        tokens_U50I, tokens_O50I, percent_per_milestone,
-                                        initLock, tokens_U50ITotal, tokens_O50ITotal,
+                                        [addresses_U50I, addresses_O250I,
+                                        tokens_U50I, tokens_O250I, percent_per_milestone,
+                                        initLock, tokens_U50ITotal, tokens_O250ITotal,
                                         tokenAdress
                                         ])
     time.sleep(15)
