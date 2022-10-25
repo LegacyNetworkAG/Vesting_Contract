@@ -36,7 +36,9 @@ contract LockContract is Context, Ownable  {
 
         uint64 lock_start;// saves the date of the initial locking of the contract
 
-        uint16 milestone;// how many milestone rewards has the Investor claimed
+        uint8 can_withdraw;// percentage of his tokens the investor can withdraw at the moment
+
+        uint8 has_withdrawn;// percentage of tokens th einvestor has withdrawn
 
         bool under50k_investor;/* 
                           saves gas by id'ing each Investor as _under50k/true (the original locked Investor) 
@@ -52,14 +54,13 @@ contract LockContract is Context, Ownable  {
     uint256[] tokens_O50I;
     uint256[] tokens_O250I;
     uint8[] percent_per_milestone;
-    uint256 initLock;// initial lock period (2 years)
+    uint256 initLock;// initial lock period 
     uint256 erc20Released;// total amount of released tokens
     uint256 numMilestones;// number of milestones (number of payments for each Investor)
     uint256 num_O50I;// number of under 50k token vested investors
     uint256 num_O250I;// number of over 50k token vested investors
     uint256 totalTokens_O50I;// total tokens promised to investors with 50k-250k tokens vested
     uint256 totalTokens_O250I;// total tokens promised to investors with more than 250k tokens vested
-    uint256 leftover;// tokens destined to new employess
     address token;// token address
 
     //Functions
@@ -120,6 +121,7 @@ contract LockContract is Context, Ownable  {
                                                 _investor_tokens, 
                                                 uint64(block.timestamp), 
                                                 0, 
+                                                0,
                                                 true);
 
             // map the new Investor address to its struct
@@ -144,6 +146,7 @@ contract LockContract is Context, Ownable  {
                                                 _investor_tokens, 
                                                 uint64(block.timestamp), 
                                                 0, 
+                                                0,
                                                 true);
 
             // map the new Investor address to its struct
@@ -166,7 +169,7 @@ contract LockContract is Context, Ownable  {
     function get_date(address _callerAddress) public view virtual returns (uint256) {
 
         // get the last milestone the Investor received
-        uint16 currentMileStone = walletToInvestor[_callerAddress].milestone;
+        //uint16 currentMileStone = walletToInvestor[_callerAddress].milestone;
         // get the time the lock period began for this Investor
         uint64 lock_start = walletToInvestor[_callerAddress].lock_start;
 
