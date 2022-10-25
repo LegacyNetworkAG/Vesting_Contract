@@ -5,21 +5,20 @@
 - Every time the investor wants to withdraw tokens, the contract calls a separate function, **can_release_percent**, which uses the current time and the initLock time to calculate how much the investor can withdraw
 - After the investor withdraws, the contract updates his investor[has_withdrawn] para meter;
 - function can_release_percent():
-$$ $$
+
     - Check how much time has elapsed how may percentage brakctes/months we have passed since the initLock;
-$$ $$
+
     - For each bracket, claculate the percentage of tokens to be released in that period  
 $$release\_perc[month]/2592000 * secondsInBracket.$$
-    - Sum them all up in a variable called **total_release**
-$$ $$
+    - Sum them all up in a variable called **totalRelease**
     - Get the percentage of released tokens he has already withdrawned,
-$$has_withdrawn=investor[has\_withdrawn]$$
+$$hasWithdrawn=investor[hasWithdrawn]$$
     - Get the percentage of tokens the investor can actually withdraw: 
-$$able\_to\_release = total\_release - has\_withdrawn$$
+$$ableToRelease = totalRelease - hasWithdrawn$$
     - Update 
-$$investor[has\_withdrawn] = investor[has\_withdrawn] + able\_to\_release$$
+$$investor[hasWithdrawn] = investor[hasWithdrawn] + ableToRelease$$
     - return 
-$$investor[tokens_promised]*$$
+$$investor[tokens_promised]*ableToRelease$$
 ## Nomenclature
 
 ## Main functions (entry points)
