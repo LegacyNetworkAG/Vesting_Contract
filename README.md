@@ -9,7 +9,7 @@
     - Check how much time has elapsed how may percentage brakctes/months we have passed since the initLock;
 
     - For each bracket, claculate the percentage of tokens to be released in that period  
-$$release\_perc[month]/2592000 * secondsInBracket.$$
+$$releasePerc[month]/2592000 * secondsInBracket.$$
     - Sum them all up in a variable called **totalRelease**
     - Get the percentage of released tokens he has already withdrawned,
 $$hasWithdrawn=investor[hasWithdrawn]$$
