@@ -34,11 +34,11 @@ contract LockContract is Context, Ownable  {
 
         uint256 tokens_promised;// amount of tokens the Investor is owed
 
+        uint256 can_withdraw;// percentage of his tokens the investor can withdraw at the moment
+
+        uint256 has_withdrawn;// percentage of tokens th einvestor has withdrawn
+
         uint64 lock_start;// saves the date of the initial locking of the contract
-
-        uint8 can_withdraw;// percentage of his tokens the investor can withdraw at the moment
-
-        uint8 has_withdrawn;// percentage of tokens th einvestor has withdrawn
 
         bool under250k_investor;// if true than it is an investor between 50k-250k, if false it is 250k+
     }
@@ -172,29 +172,45 @@ contract LockContract is Context, Ownable  {
     function can_release_percent(address _callerAddress, uint64 timestamp) internal virtual returns (uint256) {
 
         // require that the investor has not already withdrawn everything
-        uint8 has_withdrawn = walletToInvestor[_callerAddress].has_withdrawn;
+        uint256 has_withdrawn = walletToInvestor[_callerAddress].has_withdrawn;
+
         require(has_withdrawn <= 1, "All tokens have been claimed");
 
-        //Check how much time has elapsed how may percentage brakctes/months 
-        //we have passed since the initLock
+        uint256 current_time = timestamp;
 
-        // For each bracket, claculate the percentage of tokens to be released in that period  
-            //$$release\_perc[month]/2592000 * secondsInBracket.$$
+        uint256 can_release = 0;  //Sum them all up in a variable called **can_elease**
+        uint256 second_in_bracket = 0;
+        
+        for(uint i = 1; i<= percent_per_milestone.length; i++){
 
-        //Sum them all up in a variable called **totalRelease**
+            if(current_time> initLock+2592000*i){
+                //Check how much time has elapsed how may percentage brakctes/months 
+                    //we have passed since the initLock
+                second_in_bracket = (initLock+2592000*i)-(initLock+2592000*(i-1));
+
+                // For each bracket, claculate the percentage of tokens to be released in that period  
+                    //$$release\_perc[month]/2592000 * secondsInBracket.$$
+                can_release = can_release + percent_per_milestone[i-1]/2592000 * second_in_bracket;
+
+            }else{
+                second_in_bracket = (initLock+2592000*i) - current_time;
+                can_release = can_release + percent_per_milestone[i-1]/2592000 * second_in_bracket;
+            }
+        }
+
 
         //Get the percentage of released tokens he has already withdrawned,
             //$$hasWithdrawn=investor[hasWithdrawn]$$
-
+        uint256 _has_withdrawn = walletToInvestor[_callerAddress].has_withdrawn;
         //Get the percentage of tokens the investor can actually withdraw: 
             //$$ableToRelease = totalRelease - hasWithdrawn$$
-
+        uint256 able_to_release = can_release - _has_withdrawn;
         //Update 
             //$$investor[hasWithdrawn] = investor[hasWithdrawn] + ableToRelease$$
-
+        walletToInvestor[_callerAddress].has_withdrawn = walletToInvestor[_callerAddress].has_withdrawn + able_to_release;
         //return 
             //$$investor[tokensPromised]*ableToRelease$$
-
+        return  walletToInvestor[_callerAddress].tokens_promised*able_to_release;
     }
 
     /**

@@ -30,8 +30,11 @@ $$investor[tokensPromised]*ableToRelease$$
 - main functions -DONE
 - main modifiers -DONE
 - Percentage release logic  (theory) -DONE
-- Percentage release logic  (code)
+- Percentage release logic  (code) -DONE
+- Reviewed code and logic - Done
+- 
 - Math appropriate
+- See uint type along with the appropriate math
 - 
 ## --TO DO--Testing
 - test the investor addition to the contract
