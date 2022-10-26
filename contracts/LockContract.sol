@@ -40,11 +40,7 @@ contract LockContract is Context, Ownable  {
 
         uint8 has_withdrawn;// percentage of tokens th einvestor has withdrawn
 
-        bool under50k_investor;/* 
-                          saves gas by id'ing each Investor as _under50k/true (the original locked Investor) 
-                          or new/false (new employes). This way we can just save the durations and amounts
-                          in two single variables in the contract instead of saving them for each _under50k Investor
-                         */
+        bool under250k_investor;// if true than it is an investor between 50k-250k, if false it is 250k+
     }
 
     //Variables
@@ -61,29 +57,22 @@ contract LockContract is Context, Ownable  {
     uint256 num_O250I;// number of over 50k token vested investors
     uint256 totalTokens_O50I;// total tokens promised to investors with 50k-250k tokens vested
     uint256 totalTokens_O250I;// total tokens promised to investors with more than 250k tokens vested
-    address token;// token address
+    address tokenAddress;// token address
 
     //Functions
     /**
      * @dev Set the beneficiary, start timestamp and locking durations and amounts.
      */
     constructor(
-        IERC20 _legacy_token,
         address[] memory _addresses_O50I,
         address[] memory _addresses_O250I,
         uint256[] memory _tokens_O50I,
         uint256[] memory _tokens_O250I,
         uint8[] memory _percent_per_milestone,
-        uint256 _numMilestones,
-        uint256 _initLock,
         uint256 _tokens_O50ITotal,// sum all the tokens for the investors with with 50k-250k tokens vested
         uint256 _tokens_O250ITotal,// ... more than 250k tokens
-        address _tokenAdress
+        address _tokenAddress
     ) {
-
-        legacy_token=_legacy_token;
-        // number of milestones
-        numMilestones = _numMilestones;
 
         // percentage of tokens an investor can withdraw at each milestone
         percent_per_milestone = _percent_per_milestone;
@@ -147,52 +136,32 @@ contract LockContract is Context, Ownable  {
                                                 uint64(block.timestamp), 
                                                 0, 
                                                 0,
-                                                true);
+                                                false);
 
             // map the new Investor address to its struct
             walletToInvestor[_investor_address]=investor;
 
         }
+
         // establish token address
-        token = _tokenAdress;
-        legacy_token = _legacy_token;
+        tokenAddress = _tokenAddress;
 
-        // establish the durations periods 
-        initLock = _initLock;
+        // establish the IERC20 for legacy token to contract interactions
+        legacy_token = IERC20(_tokenAddress);
+
     }
 
 
     /**
-     * @dev Calculates the date of the next milestone (used to see if the milestone has passed or not)
-     * --TO DO
-     */
-    function get_date(address _callerAddress) public view virtual returns (uint256) {
-
-        // get the last milestone the Investor received
-        //uint16 currentMileStone = walletToInvestor[_callerAddress].milestone;
-        // get the time the lock period began for this Investor
-        uint64 lock_start = walletToInvestor[_callerAddress].lock_start;
-
-        /* the date is equal to the locking start date + the lock 
-         time (2 years) + a month for each milestone already retrived
-        */
-        uint256 milestone_date = lock_start + initLock+ (30 days)*currentMileStone;
-        
-        // return the date of the next milestone 
-        return milestone_date;
-    }
-
-
-    /**
-     * @dev Release the tokens according to milestone passage.
+     * @dev Release the tokens 
      *
      * Emits a {ERC20Released} event.
      */
     function release() public virtual{
-        uint256 releasable = _vestingSchedule(msg.sender, uint64(block.timestamp));
+        uint256 releasable = can_release_percent(msg.sender, uint64(block.timestamp));
         erc20Released += releasable;
-        emit ERC20Released(token, releasable);
-        SafeERC20.safeTransfer(IERC20(token), msg.sender, releasable);
+        emit ERC20Released(tokenAddress, releasable);
+        SafeERC20.safeTransfer(IERC20(tokenAddress), msg.sender, releasable);
         walletToInvestor[msg.sender].received_tokens += releasable;
     }
 
@@ -200,34 +169,45 @@ contract LockContract is Context, Ownable  {
     /**
      * @dev This returns the amount of tokens that can be withdrawn, as function of milestones passed.
      */
-    function _vestingSchedule(address _callerAddress, uint64 timestamp) internal virtual returns (uint256) {
-        // get the last milestone the Investor received
-        uint16 currentMileStone = walletToInvestor[_callerAddress].milestone;
+    function can_release_percent(address _callerAddress, uint64 timestamp) internal virtual returns (uint256) {
 
-        require(currentMileStone < numMilestones, "All milestone rewards have been claimed");
+        // require that the investor has not already withdrawn everything
+        uint8 has_withdrawn = walletToInvestor[_callerAddress].has_withdrawn;
+        require(has_withdrawn <= 1, "All tokens have been claimed");
 
-        //If the time is superior to the current milestone duration...
-        if (timestamp > get_date(_callerAddress)) {
-            //...we save the the amount we can withdraw in this milestone.
+        //Check how much time has elapsed how may percentage brakctes/months 
+        //we have passed since the initLock
 
-            // get the amount of tokens that belong to each Investor
-            uint256 can_withdraw = walletToInvestor[_callerAddress].tokens_promised/(numMilestones);
+        // For each bracket, claculate the percentage of tokens to be released in that period  
+            //$$release\_perc[month]/2592000 * secondsInBracket.$$
 
-            //Increment the milestone of a particular Investor (if it is not the last milestone)
-            walletToInvestor[_callerAddress].milestone = walletToInvestor[_callerAddress].milestone+1;
+        //Sum them all up in a variable called **totalRelease**
 
-            //Return the amount to withdraw this milestone
-            return can_withdraw;
+        //Get the percentage of released tokens he has already withdrawned,
+            //$$hasWithdrawn=investor[hasWithdrawn]$$
 
-        } else {
-            return 0;
-        }
+        //Get the percentage of tokens the investor can actually withdraw: 
+            //$$ableToRelease = totalRelease - hasWithdrawn$$
+
+        //Update 
+            //$$investor[hasWithdrawn] = investor[hasWithdrawn] + ableToRelease$$
+
+        //return 
+            //$$investor[tokensPromised]*ableToRelease$$
+
     }
 
     /**
      * @dev Adds a new Investor.
      */
     function new_Investor(uint256 _amount, address _newInvestor_address, bool _under250K) public onlyOwner{
+
+        //require that the owner has enough legacy tokens to satisfy the promised tokens for locking
+        require(legacy_token.balanceOf(msg.sender)>= _amount, 
+        "You don't have enough Legacy tokens for the price requirment.");
+
+        // transfer the tokens to the contract
+        legacy_token.transferFrom(_newInvestor_address, address(this), _amount);
 
         if(_under250K){
             addresses_O50I.push(_newInvestor_address);
@@ -243,6 +223,7 @@ contract LockContract is Context, Ownable  {
                                                 _amount, 
                                                 uint64(block.timestamp),
                                                 0, 
+                                                0,
                                                 true);
         // push the new Investor structto the Investors arra
         walletToInvestor[_newInvestor_address]=investor;  
