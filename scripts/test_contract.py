@@ -38,19 +38,19 @@ def test_withdraw(_wallet, _wallet_address,
                    investor, "Wallet three")
 
     #Attempts to withdrawe the "freed" tokens this investor is owned
-    get_funds = connector.transact(
-            _wallet,
+    get_funds = connector.call(
+            caller=_wallet_address,
             contract=_lock_contract,
-            func_name="release",
+            func_name="view_can_release_percent",
             func_params=[],
             to=_lockcontract_address,
     )
     time.sleep(15)
-
-    print("Contract after withdrawn")
-    wallet_balance(connector, 
-                   _contract_Token, Token_contract_address, 
-                   investor, "Wallet three")
+    print(get_funds['decoded']['0'])
+#   print("Contract after withdrawn")
+#     wallet_balance(connector, 
+#                    _contract_Token, Token_contract_address, 
+#                    investor, "Wallet three")
 
 #
 # Initialise
@@ -64,10 +64,10 @@ def main():
     #Connect to node
     connector = connect(1)
 
-    _contract_Token = Contract.fromFile("build_static\LegacyToken.json")
-    Token_contract_address=config('Token_contract_address')
+    _contract_Token = Contract.fromFile("Token_Mockup/build/contracts/mock_token.json")
+    Token_contract_address='0x0828ebd4c6edd086d9496e3411202b7f3160ead3'
     _lock_contract = Contract.fromFile("build\contracts\LockContract.json")
-    _lockcontract_address=config('_lockcontract_address')
+    _lockcontract_address='0x36f4be2e6bafa42a4e55b9fb856f8879d867abff'
     
     return connector, \
            _wallet, _wallet_address, \
@@ -84,7 +84,11 @@ def main():
 (connector, _wallet, _wallet_address, _wallet2, _wallet2_address , _contract_Token, 
 Token_contract_address, _lock_contract, _lockcontract_address) = main()
 
-investor = "0xee257dA9686d1531c6b8d18E053D4701c6F1e554"
+investor = _wallet_address
 
 test_withdraw(_wallet, _wallet_address, connector, _contract_Token,
                  Token_contract_address, _lock_contract, _lockcontract_address, investor)
+
+withdraw_time = int(time.time())
+lock_time=int(config('time_deployed'))
+print(format((withdraw_time-lock_time) * 0.005*50000*(10**18)/2592000, 'f'))

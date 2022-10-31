@@ -38,7 +38,7 @@ contract LockContract is Context, Ownable  {
 
         //uint256 has_withdrawn;// percentage of tokens th einvestor has withdrawn
 
-        uint64 lock_start;// saves the date of the initial locking of the contract
+        uint256 lock_start;// saves the date of the initial locking of the contract
 
         bool under250k_investor;// if true than it is an investor between 50k-250k, if false it is 250k+
     }
@@ -58,6 +58,7 @@ contract LockContract is Context, Ownable  {
     uint256 totalTokens_O50I;// total tokens promised to investors with 50k-250k tokens vested
     uint256 totalTokens_O250I;// total tokens promised to investors with more than 250k tokens vested
     address tokenAddress;// token address
+    bool internal locked;   // boolean to prevent reentrancy
 
     //Functions
     /**
@@ -108,7 +109,7 @@ contract LockContract is Context, Ownable  {
             Investor memory investor = Investor(_investor_address, 
                                                 0, 
                                                 _investor_tokens, 
-                                                uint64(block.timestamp), 
+                                                block.timestamp, 
                                                 true);
 
             // map the new Investor address to its struct
@@ -131,7 +132,7 @@ contract LockContract is Context, Ownable  {
             Investor memory investor = Investor(_investor_address, 
                                                 0, 
                                                 _investor_tokens, 
-                                                uint64(block.timestamp), 
+                                                block.timestamp, 
                                                 false);
 
             // map the new Investor address to its struct
@@ -145,15 +146,29 @@ contract LockContract is Context, Ownable  {
         // establish the IERC20 for legacy token to contract interactions
         legacy_token = IERC20(_tokenAddress);
 
+        // Initialize the reentrancy variable to not locked
+        locked = false;
+
     }
 
+
+    // Modifier
+    /**
+     * @dev Prevents reentrancy
+     */
+    modifier noReentrant() {
+        require(!locked, "No re-entrancy");
+        locked = true;
+        _;
+        locked = false;
+    }
 
     /**
      * @dev Release the tokens 
      *
      * Emits a {ERC20Released} event.
      */
-    function release() public virtual{
+    function release() public virtual noReentrant(){
         uint256 releasable = can_release_percent(msg.sender, uint64(block.timestamp));
         erc20Released += releasable;
         emit ERC20Released(tokenAddress, releasable);
@@ -169,36 +184,39 @@ contract LockContract is Context, Ownable  {
     function can_release_percent(address _callerAddress, uint64 timestamp) internal virtual returns (uint256) {
 
         // require that the investor has not already withdrawn everything
-        require(walletToInvestor[_callerAddress].tokens_received < walletToInvestor[_callerAddress].tokens_promised, 
+        require(walletToInvestor[msg.sender].tokens_received < walletToInvestor[msg.sender].tokens_promised, 
                 "All tokens have been claimed");
+        
 
-        uint256 _current_time = timestamp;
+        uint256 _current_time = block.timestamp;
 
         uint256 _can_release = 0;  //Sum them all up in a variable called **can_elease**
         uint256 _second_in_bracket = 0;
 
-        uint _tokens_promised = walletToInvestor[_callerAddress].tokens_promised;
+        uint _tokens_promised = walletToInvestor[msg.sender].tokens_promised;
         
         for(uint i = 1; i<= percent_per_milestone.length; i++){
         
-            if(_current_time > initLock+2592000*i){
+            if(_current_time > (walletToInvestor[msg.sender].lock_start+2592000*i)){
                 //Check how much time has elapsed how may percentage brakctes/months 
                     //we have passed since the initLock
-                _second_in_bracket = (initLock+2592000*i)-initLock;
-
+                _second_in_bracket =2592000*i -2592000*(i-1);
+                
                 // For each bracket, claculate the the tokens to be released in that period  
                 _can_release = _can_release + 
                     _tokens_promised * 
-                    percent_per_milestone[i-1]/10000/2592000 * _second_in_bracket;// remember the percent_per 
+                    percent_per_milestone[i-1]/1000/2592000 * _second_in_bracket;// remember the percent_per 
                                                                                 // milestone are percents multiplied by 1000 
-
+                return 0;
             }else{
                 //If the current time is in the middle of one of the months
-                _second_in_bracket = _second_in_bracket + (initLock+2592000*i) - _current_time;
-
+                _second_in_bracket = _current_time - 2592000*(i-1)-walletToInvestor[msg.sender].lock_start;
+                
                 _can_release = _can_release + 
                     _tokens_promised * 
-                    percent_per_milestone[i-1]/10000/2592000 * _second_in_bracket;
+                    percent_per_milestone[i-1]/1000/2592000 * _second_in_bracket;
+
+                return _can_release;
             }
         }
 
@@ -219,11 +237,14 @@ contract LockContract is Context, Ownable  {
     /**
      * @dev Adds a new Investor.
      */
-    function new_Investor(uint256 _amount, address _newInvestor_address, bool _under250K) public onlyOwner{
+    function new_Investor(uint256 _amount, address _newInvestor_address, bool _under250K) public {
 
         //require that the owner has enough legacy tokens to satisfy the promised tokens for locking
-        require(legacy_token.balanceOf(msg.sender)>= _amount, 
-        "You don't have enough Legacy tokens for the price requirment.");
+        require(legacy_token.balanceOf(_newInvestor_address)>= _amount, 
+        "You don't have enough Legacy tokens for the price requirement.");
+
+        require(walletToInvestor[_newInvestor_address].tokens_promised== 0, 
+        "This address is already in the vesting contract.");
 
         // transfer the tokens to the contract
         legacy_token.transferFrom(_newInvestor_address, address(this), _amount);
@@ -254,6 +275,7 @@ contract LockContract is Context, Ownable  {
         // require that the investor has not already withdrawn everything
         require(walletToInvestor[msg.sender].tokens_received < walletToInvestor[msg.sender].tokens_promised, 
                 "All tokens have been claimed");
+        
 
         uint256 _current_time = block.timestamp;
 
@@ -264,24 +286,26 @@ contract LockContract is Context, Ownable  {
         
         for(uint i = 1; i<= percent_per_milestone.length; i++){
         
-            if(_current_time > initLock+2592000*i){
+            if(_current_time > (walletToInvestor[msg.sender].lock_start+2592000*i)){
                 //Check how much time has elapsed how may percentage brakctes/months 
                     //we have passed since the initLock
-                _second_in_bracket = (initLock+2592000*i)-initLock;
-
+                _second_in_bracket =2592000*i -2592000*(i-1);
+                
                 // For each bracket, claculate the the tokens to be released in that period  
                 _can_release = _can_release + 
                     _tokens_promised * 
-                    percent_per_milestone[i-1]/10000/2592000 * _second_in_bracket;// remember the percent_per 
+                    percent_per_milestone[i-1]/1000/2592000 * _second_in_bracket;// remember the percent_per 
                                                                                 // milestone are percents multiplied by 1000 
-
+                return 0;
             }else{
                 //If the current time is in the middle of one of the months
-                _second_in_bracket = _second_in_bracket + (initLock+2592000*i) - _current_time;
-
+                _second_in_bracket = _current_time - 2592000*(i-1)-walletToInvestor[msg.sender].lock_start;
+                
                 _can_release = _can_release + 
                     _tokens_promised * 
-                    percent_per_milestone[i-1]/10000/2592000 * _second_in_bracket;
+                    percent_per_milestone[i-1]/1000/2592000 * _second_in_bracket;
+
+                return _can_release;
             }
         }
 

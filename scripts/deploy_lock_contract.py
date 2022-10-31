@@ -15,18 +15,15 @@ def deploy_lock_contract(connector, _wallet,_wallet_address, _wallet2_address):
     #Constructor variables
     addresses_O50I = ['0x5959D60345aB12befE24bd8d21EF53eBa7688f6D',
                       '0x306A430F0E361e96E69D650067Eba3F73307b5C4'] # my wallets
-    addresses_O250I = ['0x6620086742791009c5348d35aa5bd2018cab5ff7'] #saynode
-    tokens_U50I=[1*10**(18),
-                1*10**(18),
+    addresses_O250I = [] #saynode
+    tokens_U50I=[50000*10**(18),
                 1*10**(18)]
-    tokens_O250I=[1*10**(18),
-                1*10**(18),
-                1*10**(18)]
-    percent_per_milestone=[5, 10, 15]#0.05%/100*10000
+    tokens_O250I=[]
+    percent_per_milestone=[5, 10, 15]#5%/100*10000
     percent_per_milestone = (percent_per_milestone)
     tokens_U50ITotal = sum(tokens_U50I)
     tokens_O250ITotal = sum(tokens_O250I)
-    tokenAdress = "0xee257dA9686d1531c6b8d18E053D4701c6F1e554"
+    tokenAdress = "0x0828ebd4c6edd086d9496e3411202b7f3160ead3"
 
     #Deploy
     _lock_contract = Contract.fromFile("build\contracts\LockContract.json")
@@ -62,3 +59,9 @@ def main():
     connector = connect(1)
     deploy_lock_contract(connector, _wallet,_wallet_address, _wallet2_address)
 main()
+# Save the time in which the contract was deployed aka when the lock begins
+dotenv_file = dotenv.find_dotenv()
+dotenv.load_dotenv(dotenv_file)
+os.environ["time_deployed"] = str(int(time.time()))
+dotenv.set_key(dotenv_file, "time_deployed", os.environ["time_deployed"])
+print(int(time.time()))
