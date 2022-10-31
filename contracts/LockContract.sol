@@ -30,13 +30,13 @@ contract LockContract is Context, Ownable  {
     struct Investor {
         address investor_address;// probably can take it out
 
-        uint256 received_tokens;// amount of tokens the Investor has received
+        uint256 tokens_received;// amount of tokens the Investor has received
 
         uint256 tokens_promised;// amount of tokens the Investor is owed
 
-        uint256 can_withdraw;// percentage of his tokens the investor can withdraw at the moment
+        //uint256 can_withdraw;// percentage of his tokens the investor can withdraw at the moment
 
-        uint256 has_withdrawn;// percentage of tokens th einvestor has withdrawn
+        //uint256 has_withdrawn;// percentage of tokens th einvestor has withdrawn
 
         uint64 lock_start;// saves the date of the initial locking of the contract
 
@@ -49,7 +49,7 @@ contract LockContract is Context, Ownable  {
     address[] addresses_O250I;
     uint256[] tokens_O50I;
     uint256[] tokens_O250I;
-    uint8[] percent_per_milestone;
+    uint256[] percent_per_milestone;
     uint256 initLock;// initial lock period 
     uint256 erc20Released;// total amount of released tokens
     uint256 numMilestones;// number of milestones (number of payments for each Investor)
@@ -68,7 +68,7 @@ contract LockContract is Context, Ownable  {
         address[] memory _addresses_O250I,
         uint256[] memory _tokens_O50I,
         uint256[] memory _tokens_O250I,
-        uint8[] memory _percent_per_milestone,
+        uint256[] memory _percent_per_milestone,
         uint256 _tokens_O50ITotal,// sum all the tokens for the investors with with 50k-250k tokens vested
         uint256 _tokens_O250ITotal,// ... more than 250k tokens
         address _tokenAddress
@@ -109,8 +109,6 @@ contract LockContract is Context, Ownable  {
                                                 0, 
                                                 _investor_tokens, 
                                                 uint64(block.timestamp), 
-                                                0, 
-                                                0,
                                                 true);
 
             // map the new Investor address to its struct
@@ -134,8 +132,6 @@ contract LockContract is Context, Ownable  {
                                                 0, 
                                                 _investor_tokens, 
                                                 uint64(block.timestamp), 
-                                                0, 
-                                                0,
                                                 false);
 
             // map the new Investor address to its struct
@@ -162,55 +158,62 @@ contract LockContract is Context, Ownable  {
         erc20Released += releasable;
         emit ERC20Released(tokenAddress, releasable);
         SafeERC20.safeTransfer(IERC20(tokenAddress), msg.sender, releasable);
-        walletToInvestor[msg.sender].received_tokens += releasable;
+        walletToInvestor[msg.sender].tokens_received += releasable;
     }
 
 
     /**
-     * @dev This returns the amount of tokens that can be withdrawn, as function of milestones passed.
+     * @dev Claculates and returns the amount of tokens that can be withdrawn, as function of milestones passed.
+     * Updates the investor struct with the amount of tokens he has withdrawn.
      */
     function can_release_percent(address _callerAddress, uint64 timestamp) internal virtual returns (uint256) {
 
         // require that the investor has not already withdrawn everything
-        uint256 has_withdrawn = walletToInvestor[_callerAddress].has_withdrawn;
+        require(walletToInvestor[_callerAddress].tokens_received < walletToInvestor[_callerAddress].tokens_promised, 
+                "All tokens have been claimed");
 
-        require(has_withdrawn <= 1, "All tokens have been claimed");
+        uint256 _current_time = timestamp;
 
-        uint256 current_time = timestamp;
+        uint256 _can_release = 0;  //Sum them all up in a variable called **can_elease**
+        uint256 _second_in_bracket = 0;
 
-        uint256 can_release = 0;  //Sum them all up in a variable called **can_elease**
-        uint256 second_in_bracket = 0;
+        uint _tokens_promised = walletToInvestor[_callerAddress].tokens_promised;
         
         for(uint i = 1; i<= percent_per_milestone.length; i++){
-
-            if(current_time> initLock+2592000*i){
+        
+            if(_current_time > initLock+2592000*i){
                 //Check how much time has elapsed how may percentage brakctes/months 
                     //we have passed since the initLock
-                second_in_bracket = (initLock+2592000*i)-(initLock+2592000*(i-1));
+                _second_in_bracket = (initLock+2592000*i)-initLock;
 
-                // For each bracket, claculate the percentage of tokens to be released in that period  
-                    //$$release\_perc[month]/2592000 * secondsInBracket.$$
-                can_release = can_release + percent_per_milestone[i-1]/2592000 * second_in_bracket;
+                // For each bracket, claculate the the tokens to be released in that period  
+                _can_release = _can_release + 
+                    _tokens_promised * 
+                    percent_per_milestone[i-1]/10000/2592000 * _second_in_bracket;// remember the percent_per 
+                                                                                // milestone are percents multiplied by 1000 
 
             }else{
-                second_in_bracket = (initLock+2592000*i) - current_time;
-                can_release = can_release + percent_per_milestone[i-1]/2592000 * second_in_bracket;
+                //If the current time is in the middle of one of the months
+                _second_in_bracket = _second_in_bracket + (initLock+2592000*i) - _current_time;
+
+                _can_release = _can_release + 
+                    _tokens_promised * 
+                    percent_per_milestone[i-1]/10000/2592000 * _second_in_bracket;
             }
         }
 
 
-        //Get the percentage of released tokens he has already withdrawned,
-            //$$hasWithdrawn=investor[hasWithdrawn]$$
-        uint256 _has_withdrawn = walletToInvestor[_callerAddress].has_withdrawn;
-        //Get the percentage of tokens the investor can actually withdraw: 
-            //$$ableToRelease = totalRelease - hasWithdrawn$$
-        uint256 able_to_release = can_release - _has_withdrawn;
+        //Get the quatity of tokens he has already withdrawned,
+        uint256 _has_withdrawn = walletToInvestor[_callerAddress].tokens_received;
+
+        //Get the amount of tokens the investor can actually withdraw: 
+        uint256 _able_to_release = _can_release - _has_withdrawn;
+
         //Update 
-            //$$investor[hasWithdrawn] = investor[hasWithdrawn] + ableToRelease$$
-        walletToInvestor[_callerAddress].has_withdrawn = walletToInvestor[_callerAddress].has_withdrawn + able_to_release;
+        walletToInvestor[_callerAddress].tokens_received = walletToInvestor[_callerAddress].tokens_received 
+                                                            + _able_to_release;
         //return 
-            //$$investor[tokensPromised]*ableToRelease$$
-        return  walletToInvestor[_callerAddress].tokens_promised*able_to_release;
+        return  _able_to_release;
     }
 
     /**
@@ -238,10 +241,65 @@ contract LockContract is Context, Ownable  {
                                                 0, 
                                                 _amount, 
                                                 uint64(block.timestamp),
-                                                0, 
-                                                0,
                                                 true);
         // push the new Investor structto the Investors arra
         walletToInvestor[_newInvestor_address]=investor;  
+    }
+
+    /**
+     * @dev View function that an investor can use to see how many tokens he can withdraw
+     */
+    function view_can_release_percent() public view returns (uint256) {
+
+        // require that the investor has not already withdrawn everything
+        require(walletToInvestor[msg.sender].tokens_received < walletToInvestor[msg.sender].tokens_promised, 
+                "All tokens have been claimed");
+
+        uint256 _current_time = block.timestamp;
+
+        uint256 _can_release = 0;  //Sum them all up in a variable called **can_elease**
+        uint256 _second_in_bracket = 0;
+
+        uint _tokens_promised = walletToInvestor[msg.sender].tokens_promised;
+        
+        for(uint i = 1; i<= percent_per_milestone.length; i++){
+        
+            if(_current_time > initLock+2592000*i){
+                //Check how much time has elapsed how may percentage brakctes/months 
+                    //we have passed since the initLock
+                _second_in_bracket = (initLock+2592000*i)-initLock;
+
+                // For each bracket, claculate the the tokens to be released in that period  
+                _can_release = _can_release + 
+                    _tokens_promised * 
+                    percent_per_milestone[i-1]/10000/2592000 * _second_in_bracket;// remember the percent_per 
+                                                                                // milestone are percents multiplied by 1000 
+
+            }else{
+                //If the current time is in the middle of one of the months
+                _second_in_bracket = _second_in_bracket + (initLock+2592000*i) - _current_time;
+
+                _can_release = _can_release + 
+                    _tokens_promised * 
+                    percent_per_milestone[i-1]/10000/2592000 * _second_in_bracket;
+            }
+        }
+
+
+        //Get the quatity of tokens he has already withdrawned,
+        uint256 _has_withdrawn = walletToInvestor[msg.sender].tokens_received;
+
+        //Get the amount of tokens the investor can actually withdraw: 
+        uint256 _able_to_release = _can_release - _has_withdrawn;
+
+        //return 
+        return  _able_to_release;
+    }
+
+    /**
+     * @dev View function to get contract balance
+     */
+    function contract_balance() public view returns (uint256) {
+        return legacy_token.balanceOf(address(this));
     }
 }
