@@ -169,7 +169,7 @@ contract LockContract is Context, Ownable  {
      * Emits a {ERC20Released} event.
      */
     function release() public virtual noReentrant(){
-        uint256 releasable = can_release_percent(msg.sender, uint64(block.timestamp));
+        uint256 releasable = can_release_percent(msg.sender, uint256(block.timestamp));
         erc20Released += releasable;
         emit ERC20Released(tokenAddress, releasable);
         SafeERC20.safeTransfer(IERC20(tokenAddress), msg.sender, releasable);
@@ -181,14 +181,14 @@ contract LockContract is Context, Ownable  {
      * @dev Claculates and returns the amount of tokens that can be withdrawn, as function of milestones passed.
      * Updates the investor struct with the amount of tokens he has withdrawn.
      */
-    function can_release_percent(address _callerAddress, uint64 timestamp) internal virtual returns (uint256) {
+    function can_release_percent(address _callerAddress, uint256 timestamp) internal virtual returns (uint256) {
 
         // require that the investor has not already withdrawn everything
         require(walletToInvestor[msg.sender].tokens_received < walletToInvestor[msg.sender].tokens_promised, 
                 "All tokens have been claimed");
         
 
-        uint256 _current_time = block.timestamp;
+        uint256 _current_time =timestamp;
 
         uint256 _can_release = 0;  //Sum them all up in a variable called **can_elease**
         uint256 _second_in_bracket = 0;
@@ -207,7 +207,7 @@ contract LockContract is Context, Ownable  {
                     _tokens_promised * 
                     percent_per_milestone[i-1]/1000/2592000 * _second_in_bracket;// remember the percent_per 
                                                                                 // milestone are percents multiplied by 1000 
-                return 0;
+                
             }else{
                 //If the current time is in the middle of one of the months
                 _second_in_bracket = _current_time - 2592000*(i-1)-walletToInvestor[msg.sender].lock_start;
@@ -216,7 +216,7 @@ contract LockContract is Context, Ownable  {
                     _tokens_promised * 
                     percent_per_milestone[i-1]/1000/2592000 * _second_in_bracket;
 
-                return _can_release;
+                break;
             }
         }
 
@@ -296,7 +296,7 @@ contract LockContract is Context, Ownable  {
                     _tokens_promised * 
                     percent_per_milestone[i-1]/1000/2592000 * _second_in_bracket;// remember the percent_per 
                                                                                 // milestone are percents multiplied by 1000 
-                return 0;
+                
             }else{
                 //If the current time is in the middle of one of the months
                 _second_in_bracket = _current_time - 2592000*(i-1)-walletToInvestor[msg.sender].lock_start;
@@ -305,7 +305,7 @@ contract LockContract is Context, Ownable  {
                     _tokens_promised * 
                     percent_per_milestone[i-1]/1000/2592000 * _second_in_bracket;
 
-                return _can_release;
+                break;
             }
         }
 

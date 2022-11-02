@@ -67,7 +67,7 @@ def main():
     _contract_Token = Contract.fromFile("Token_Mockup/build/contracts/mock_token.json")
     Token_contract_address='0x0828ebd4c6edd086d9496e3411202b7f3160ead3'
     _lock_contract = Contract.fromFile("build\contracts\LockContract.json")
-    _lockcontract_address='0x36f4be2e6bafa42a4e55b9fb856f8879d867abff'
+    _lockcontract_address='0x69c1a7230c50597072814e63600193c394f63210'
     
     return connector, \
            _wallet, _wallet_address, \
