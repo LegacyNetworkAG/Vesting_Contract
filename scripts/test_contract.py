@@ -29,7 +29,6 @@ def test_withdraw(_wallet, _wallet_address,
                   _lock_contract, _lockcontract_address, 
                   investor):
 
-
     print("Start Withdraw test")
 
     print("Investor balance before withdraw")
@@ -45,7 +44,6 @@ def test_withdraw(_wallet, _wallet_address,
             func_params=[],
             to=_lockcontract_address,
     )
-    time.sleep(15)
     print(get_funds['decoded']['0'])
 #   print("Contract after withdrawn")
 #     wallet_balance(connector, 
@@ -67,7 +65,7 @@ def main():
     _contract_Token = Contract.fromFile("Token_Mockup/build/contracts/mock_token.json")
     Token_contract_address='0x0828ebd4c6edd086d9496e3411202b7f3160ead3'
     _lock_contract = Contract.fromFile("build\contracts\LockContract.json")
-    _lockcontract_address='0x69c1a7230c50597072814e63600193c394f63210'
+    _lockcontract_address='0x74c02bd00679dfe7a3e36616d4b9dbc67d14c373'
     
     return connector, \
            _wallet, _wallet_address, \
@@ -91,4 +89,4 @@ test_withdraw(_wallet, _wallet_address, connector, _contract_Token,
 
 withdraw_time = int(time.time())
 lock_time=int(config('time_deployed'))
-print(format((withdraw_time-lock_time) * 0.005*50000*(10**18)/2592000, 'f'))
+print(format((withdraw_time-lock_time) * 500*50000*(10**18)/10000/2592000, 'f'))

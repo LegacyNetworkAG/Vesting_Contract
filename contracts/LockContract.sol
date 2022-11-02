@@ -49,7 +49,7 @@ contract LockContract is Context, Ownable  {
     address[] addresses_O250I;
     uint256[] tokens_O50I;
     uint256[] tokens_O250I;
-    uint256[] percent_per_milestone;
+    uint256[] percent_per_milestone;//percentages per month that will be released (in basis points)
     uint256 initLock;// initial lock period 
     uint256 erc20Released;// total amount of released tokens
     uint256 numMilestones;// number of milestones (number of payments for each Investor)
@@ -205,7 +205,7 @@ contract LockContract is Context, Ownable  {
                 // For each bracket, claculate the the tokens to be released in that period  
                 _can_release = _can_release + 
                     _tokens_promised * 
-                    percent_per_milestone[i-1]/1000/2592000 * _second_in_bracket;// remember the percent_per 
+                    percent_per_milestone[i-1]/10000/2592000 * _second_in_bracket;// remember the percent_per 
                                                                                 // milestone are percents multiplied by 1000 
                 
             }else{
@@ -214,7 +214,7 @@ contract LockContract is Context, Ownable  {
                 
                 _can_release = _can_release + 
                     _tokens_promised * 
-                    percent_per_milestone[i-1]/1000/2592000 * _second_in_bracket;
+                    percent_per_milestone[i-1]/10000/2592000 * _second_in_bracket;
 
                 break;
             }
@@ -294,7 +294,7 @@ contract LockContract is Context, Ownable  {
                 // For each bracket, claculate the the tokens to be released in that period  
                 _can_release = _can_release + 
                     _tokens_promised * 
-                    percent_per_milestone[i-1]/1000/2592000 * _second_in_bracket;// remember the percent_per 
+                    percent_per_milestone[i-1]/10000/2592000 * _second_in_bracket;// remember the percent_per 
                                                                                 // milestone are percents multiplied by 1000 
                 
             }else{
@@ -303,7 +303,7 @@ contract LockContract is Context, Ownable  {
                 
                 _can_release = _can_release + 
                     _tokens_promised * 
-                    percent_per_milestone[i-1]/1000/2592000 * _second_in_bracket;
+                    percent_per_milestone[i-1]/10000/2592000 * _second_in_bracket;
 
                 break;
             }

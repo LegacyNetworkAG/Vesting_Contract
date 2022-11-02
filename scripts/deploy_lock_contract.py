@@ -19,7 +19,7 @@ def deploy_lock_contract(connector, _wallet,_wallet_address, _wallet2_address):
     tokens_U50I=[50000*10**(18),
                 1*10**(18)]
     tokens_O250I=[]
-    percent_per_milestone=[5, 10, 15]#5%/100*10000
+    percent_per_milestone=[500, 1000, 1500]#basis points
     percent_per_milestone = (percent_per_milestone)
     tokens_U50ITotal = sum(tokens_U50I)
     tokens_O250ITotal = sum(tokens_O250I)
