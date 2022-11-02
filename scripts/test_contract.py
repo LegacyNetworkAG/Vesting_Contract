@@ -45,11 +45,19 @@ def test_withdraw(_wallet, _wallet_address,
             to=_lockcontract_address,
     )
     print(get_funds['decoded']['0'])
-#   print("Contract after withdrawn")
-#     wallet_balance(connector, 
-#                    _contract_Token, Token_contract_address, 
-#                    investor, "Wallet three")
 
+#
+# Get initLock
+#
+def get_initlock():
+    get_funds = connector.call(
+            caller=_wallet_address,
+            contract=_lock_contract,
+            func_name="get_initLock",
+            func_params=[],
+            to=_lockcontract_address,
+    )
+    return int(get_funds['decoded']['0'])
 #
 # Initialise
 #    
@@ -65,7 +73,7 @@ def main():
     _contract_Token = Contract.fromFile("Token_Mockup/build/contracts/mock_token.json")
     Token_contract_address='0x0828ebd4c6edd086d9496e3411202b7f3160ead3'
     _lock_contract = Contract.fromFile("build\contracts\LockContract.json")
-    _lockcontract_address='0x74c02bd00679dfe7a3e36616d4b9dbc67d14c373'
+    _lockcontract_address='0x7ead2d8d9fa96504517220952ac5bf486493c239'
     
     return connector, \
            _wallet, _wallet_address, \
@@ -87,6 +95,6 @@ investor = _wallet_address
 test_withdraw(_wallet, _wallet_address, connector, _contract_Token,
                  Token_contract_address, _lock_contract, _lockcontract_address, investor)
 
-withdraw_time = int(time.time())
-lock_time=int(config('time_deployed'))
-print(format((withdraw_time-lock_time) * 500*50000*(10**18)/10000/2592000, 'f'))
+
+lock_time=get_initlock()
+print(format((int(time.time())-lock_time) * 500*50000*(10**18)/10000/2592000, 'f'))

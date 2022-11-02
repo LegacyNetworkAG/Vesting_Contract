@@ -34,10 +34,6 @@ contract LockContract is Context, Ownable  {
 
         uint256 tokens_promised;// amount of tokens the Investor is owed
 
-        //uint256 can_withdraw;// percentage of his tokens the investor can withdraw at the moment
-
-        //uint256 has_withdrawn;// percentage of tokens th einvestor has withdrawn
-
         uint256 lock_start;// saves the date of the initial locking of the contract
 
         bool under250k_investor;// if true than it is an investor between 50k-250k, if false it is 250k+
@@ -74,6 +70,8 @@ contract LockContract is Context, Ownable  {
         uint256 _tokens_O250ITotal,// ... more than 250k tokens
         address _tokenAddress
     ) {
+
+        initLock = block.timestamp;
 
         // percentage of tokens an investor can withdraw at each milestone
         percent_per_milestone = _percent_per_milestone;
@@ -325,5 +323,9 @@ contract LockContract is Context, Ownable  {
      */
     function contract_balance() public view returns (uint256) {
         return legacy_token.balanceOf(address(this));
+    }
+
+    function get_initLock() public view returns(uint256){
+        return initLock;
     }
 }
