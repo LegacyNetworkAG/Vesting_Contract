@@ -150,7 +150,7 @@ contract LockContract is Context, Ownable  {
     }
 
 
-    // Modifier
+    // Modifiers
     /**
      * @dev Prevents reentrancy
      */
@@ -162,11 +162,19 @@ contract LockContract is Context, Ownable  {
     }
 
     /**
+     * @dev Only investors can call functions
+     */
+    modifier onlyInvestor() {
+        require(walletToInvestor[msg.sender].tokens_promised != 0, "Not an investor");
+        _;
+    }
+
+    /**
      * @dev Release the tokens 
      *
      * Emits a {ERC20Released} event.
      */
-    function release() public virtual noReentrant(){
+    function release() public virtual noReentrant() onlyInvestor(){
         uint256 releasable = can_release_percent(msg.sender, uint256(block.timestamp));
         erc20Released += releasable;
         emit ERC20Released(tokenAddress, releasable);
