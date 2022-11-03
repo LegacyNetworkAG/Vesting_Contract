@@ -57,6 +57,7 @@ def get_initlock():
             func_params=[],
             to=_lockcontract_address,
     )
+
     return int(get_funds['decoded']['0'])
 #
 # Initialise
@@ -73,7 +74,7 @@ def main():
     _contract_Token = Contract.fromFile("Token_Mockup/build/contracts/mock_token.json")
     Token_contract_address='0x0828ebd4c6edd086d9496e3411202b7f3160ead3'
     _lock_contract = Contract.fromFile("build\contracts\LockContract.json")
-    _lockcontract_address='0x7ead2d8d9fa96504517220952ac5bf486493c239'
+    _lockcontract_address='0x312fd66225c3d9d0deb53c05826ec5de466608ea'
     
     return connector, \
            _wallet, _wallet_address, \

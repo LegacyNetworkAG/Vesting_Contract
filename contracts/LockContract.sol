@@ -233,9 +233,6 @@ contract LockContract is Context, Ownable  {
         //Get the amount of tokens the investor can actually withdraw: 
         uint256 _able_to_release = _can_release - _has_withdrawn;
 
-        //Update 
-        walletToInvestor[_callerAddress].tokens_received = walletToInvestor[_callerAddress].tokens_received 
-                                                            + _able_to_release;
         //return 
         return  _able_to_release;
     }

@@ -14,10 +14,12 @@ def deploy_lock_contract(connector, _wallet,_wallet_address, _wallet2_address):
 
     #Constructor variables
     addresses_O50I = ['0x5959D60345aB12befE24bd8d21EF53eBa7688f6D',
-                      '0x306A430F0E361e96E69D650067Eba3F73307b5C4'] # my wallets
+                      '0x306A430F0E361e96E69D650067Eba3F73307b5C4',
+                      '0x6620086742791009c5348d35aa5bd2018cab5ff7'] # my wallets
     addresses_O250I = [] #saynode
     tokens_U50I=[50000*10**(18),
-                1*10**(18)]
+                50000*10**(18),
+                50000*10**(18)]
     tokens_O250I=[]
     percent_per_milestone=[500, 1000, 1500]#basis points
     percent_per_milestone = (percent_per_milestone)

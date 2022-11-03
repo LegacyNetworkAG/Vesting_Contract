@@ -4,5 +4,6 @@ percent_per_milestone = [50, 10, 15]
 _second_in_bracket = 1
 _can_release =  _tokens_promised * percent_per_milestone[0]* _second_in_bracket/(10000*2592000) 
 print(format(_can_release, 'f'))
+print(279706790123456740/10**18)
 
 

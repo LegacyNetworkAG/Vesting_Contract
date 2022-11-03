@@ -48,7 +48,7 @@ def fund_contract(_wallet, _wallet_address, connector, _contract_Token,
                 _wallet,
                 _contract_Token, Token_contract_address,
                 _lockcontract_address,
-                3*10**(18)
+                50000*10**(18)
                 )
     print("Token Balances")
     wallet_balance(connector, _contract_Token, Token_contract_address, _wallet_address, "Wallet's")
@@ -65,10 +65,10 @@ def main():
     #Connect to node
     connector = connect(1)
 
-    _contract_Token = Contract.fromFile("build_static\LegacyToken.json")
-    Token_contract_address=config('Token_contract_address')
+    _contract_Token = Contract.fromFile('build\contracts\mock_token.json')
+    Token_contract_address='0x0828ebd4c6edd086d9496e3411202b7f3160ead3'
     _lock_contract = Contract.fromFile("build\contracts\LockContract.json")
-    _lockcontract_address=config('_lockcontract_address')
+    _lockcontract_address='0x312fd66225c3d9d0deb53c05826ec5de466608ea'
     
     return _wallet, _wallet_address, connector, _contract_Token, \
            Token_contract_address, _lock_contract, _lockcontract_address
