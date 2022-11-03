@@ -44,7 +44,7 @@ def test_withdraw(_wallet, _wallet_address,
             func_params=[],
             to=_lockcontract_address,
     )
-    print(get_funds['decoded']['0'])
+    print(int(get_funds['decoded']['0'])/10**18)
 
 #
 # Get initLock
@@ -58,7 +58,7 @@ def get_initlock():
             to=_lockcontract_address,
     )
 
-    return int(get_funds['decoded']['0'])
+    return int(get_funds['decoded']['0']), int(time.time())-int(get_funds['decoded']['0'])
 #
 # Initialise
 #    
@@ -97,5 +97,6 @@ test_withdraw(_wallet, _wallet_address, connector, _contract_Token,
                  Token_contract_address, _lock_contract, _lockcontract_address, investor)
 
 
-lock_time=get_initlock()
-print(format((int(time.time())-lock_time) * 500*50000*(10**18)/10000/2592000, 'f'))
+lock_time, time_elapsed=get_initlock()
+print(format(((time_elapsed) * 500*50000*(10**18)/10000/2592000)/10**18, 'f'))
+print("Time elapsed since lock:", time_elapsed)
