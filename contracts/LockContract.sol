@@ -5,7 +5,6 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
-import "@openzeppelin/contracts/utils/math/Math.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 /**
@@ -34,7 +33,7 @@ contract LockContract is Context, Ownable  {
 
         uint256 tokens_promised;// amount of tokens the Investor is owed
 
-        uint256 lock_start;// saves the date of the initial locking of the contract
+        uint256 vesting_start;// saves the date of the initial locking of the contract
 
         bool under250k_investor;// if true than it is an investor between 50k-250k, if false it is 250k+
     }
@@ -61,16 +60,29 @@ contract LockContract is Context, Ownable  {
      * @dev Set the beneficiary, start timestamp and locking durations and amounts.
      */
     constructor(
-        address[] memory _addresses_O50I,
-        address[] memory _addresses_O250I,
-        uint256[] memory _tokens_O50I,
-        uint256[] memory _tokens_O250I,
-        uint256[] memory _percent_per_milestone,
+        address[] memory _addresses_O50I,// array with the addresses of the investors with 50k to 250k tokens
+        address[] memory _addresses_O250I,// array with the addresses of the investors with more than 250k tokens
+
+        uint256[] memory _tokens_O50I,// array with the token amount to be vested to the equivalent
+                                      // indexed addres in _addresses_O50I
+        uint256[] memory _tokens_O250I,// array with the token amount to be vested to the equivalent
+                                      // indexed addres in _addresses_O250I
+
+        uint256[] memory _percent_per_milestone,// has the basis point values of the percentages 
+                                                // of tokens that should be released in total in 
+                                                // the indexed month
+
         uint256 _tokens_O50ITotal,// sum all the tokens for the investors with with 50k-250k tokens vested
         uint256 _tokens_O250ITotal,// ... more than 250k tokens
-        address _tokenAddress
+
+        uint256 _timeLock_O50I,// time lock period for investors with with 50k-250k tokens vested
+        uint256 _timeLock_O250I,// ... more than 250k tokens
+
+        address _tokenAddress// address of the token to be used
     ) {
 
+        // marks the time point in which the contract was deployed and so the time
+        // in which the investors locking period (before vesting) started
         initLock = block.timestamp;
 
         // percentage of tokens an investor can withdraw at each milestone
@@ -107,7 +119,7 @@ contract LockContract is Context, Ownable  {
             Investor memory investor = Investor(_investor_address, 
                                                 0, 
                                                 _investor_tokens, 
-                                                block.timestamp, 
+                                                block.timestamp + _timeLock_O50I, 
                                                 true);
 
             // map the new Investor address to its struct
@@ -130,7 +142,7 @@ contract LockContract is Context, Ownable  {
             Investor memory investor = Investor(_investor_address, 
                                                 0, 
                                                 _investor_tokens, 
-                                                block.timestamp, 
+                                                block.timestamp + _timeLock_O250I, 
                                                 false);
 
             // map the new Investor address to its struct
@@ -187,28 +199,40 @@ contract LockContract is Context, Ownable  {
      * @dev Claculates and returns the amount of tokens that can be withdrawn, as function of milestones passed.
      * Updates the investor struct with the amount of tokens he has withdrawn.
      */
-    function can_release_percent(address _callerAddress, uint256 timestamp) internal virtual returns (uint256) {
+    function can_release_percent(address _callerAddress, uint256 _timestamp) internal virtual returns (uint256) {
+
+        // get the quatity of tokens he has already withdrawned,
+        uint256 _has_withdrawn = walletToInvestor[_callerAddress].tokens_received;
+        // gets the investors promised tokens
+        uint256 _tokens_promised = walletToInvestor[_callerAddress].tokens_promised;
 
         // require that the investor has not already withdrawn everything
-        require(walletToInvestor[msg.sender].tokens_received < walletToInvestor[msg.sender].tokens_promised, 
-                "All tokens have been claimed");
+        require(_has_withdrawn < _tokens_promised, "All tokens have been claimed");
         
+        // gets the current time
+        uint256 _current_time = _timestamp;
+        // gets the time in which the investors vesting starts
+        uint256 _vesting_start = walletToInvestor[_callerAddress].vesting_start;
 
-        uint256 _current_time =timestamp;
+        // require that the locking time for this investor has passed and thevesting has started
+        require(_current_time > _vesting_start, 'Lock time has not passed yet');
 
-        uint256 _can_release = 0;  //Sum them all up in a variable called **can_elease**
+        // will save the amount that is calculated that can be released
+        uint256 _can_release = 0;
+        // saves the seconds the investor has spent vesting in each bracket, to allow the token withdraw calc
         uint256 _second_in_bracket = 0;
-
-        uint _tokens_promised = walletToInvestor[msg.sender].tokens_promised;
         
+        //Loop through every month until we reach the one the  vesting of this investor is currently on
         for(uint i = 1; i<= percent_per_milestone.length; i++){
         
-            if(_current_time > (walletToInvestor[msg.sender].lock_start+2592000*i)){
-                //Check how much time has elapsed how may percentage brakctes/months 
+            // if the time the investor has been vesting is bigger than i month
+            if(_current_time > (_vesting_start+2592000*i)){
+
+                // check how much time has elapsed how may percentage brakctes/months 
                     //we have passed since the initLock
                 _second_in_bracket =2592000*i -2592000*(i-1);
                 
-                // For each bracket, claculate the the tokens to be released in that period  
+                // for each bracket, claculate the the tokens to be released in that period  
                 _can_release = _can_release + 
                     _tokens_promised * 
                     percent_per_milestone[i-1]/10000/2592000 * _second_in_bracket;// remember the percent_per 
@@ -216,7 +240,7 @@ contract LockContract is Context, Ownable  {
                 
             }else{
                 //If the current time is in the middle of one of the months
-                _second_in_bracket = _current_time - 2592000*(i-1)-walletToInvestor[msg.sender].lock_start;
+                _second_in_bracket = _current_time - 2592000*(i-1)-_vesting_start;
                 
                 _can_release = _can_release + 
                     _tokens_promised * 
@@ -226,14 +250,10 @@ contract LockContract is Context, Ownable  {
             }
         }
 
-
-        //Get the quatity of tokens he has already withdrawned,
-        uint256 _has_withdrawn = walletToInvestor[_callerAddress].tokens_received;
-
-        //Get the amount of tokens the investor can actually withdraw: 
+        // get the amount of tokens the investor can actually withdraw: 
         uint256 _able_to_release = _can_release - _has_withdrawn;
 
-        //return 
+        // return 
         return  _able_to_release;
     }
 
@@ -275,26 +295,38 @@ contract LockContract is Context, Ownable  {
      */
     function view_can_release_percent() public view returns (uint256) {
 
+        // get the quatity of tokens he has already withdrawned,
+        uint256 _has_withdrawn = walletToInvestor[msg.sender].tokens_received;
+        // gets the investors promised tokens
+        uint256 _tokens_promised = walletToInvestor[msg.sender].tokens_promised;
+
         // require that the investor has not already withdrawn everything
-        require(walletToInvestor[msg.sender].tokens_received < walletToInvestor[msg.sender].tokens_promised, 
-                "All tokens have been claimed");
+        require(_has_withdrawn < _tokens_promised, "All tokens have been claimed");
         
-
+        // gets the current time
         uint256 _current_time = block.timestamp;
+        // gets the time in which the investors vesting starts
+        uint256 _vesting_start = walletToInvestor[msg.sender].vesting_start;
 
-        uint256 _can_release = 0;  //Sum them all up in a variable called **can_elease**
+        // require that the locking time for this investor has passed and thevesting has started
+        require(_current_time > _vesting_start, 'Lock time has not passed yet');
+
+        // will save the amount that is calculated that can be released
+        uint256 _can_release = 0;
+        // saves the seconds the investor has spent vesting in each bracket, to allow the token withdraw calc
         uint256 _second_in_bracket = 0;
-
-        uint _tokens_promised = walletToInvestor[msg.sender].tokens_promised;
         
+        //Loop through every milestone until we reach the one the  vesting of this investor is currently on
         for(uint i = 1; i<= percent_per_milestone.length; i++){
         
-            if(_current_time > (walletToInvestor[msg.sender].lock_start+2592000*i)){
-                //Check how much time has elapsed how may percentage brakctes/months 
+            // if the time the investor has been vesting is bigger than i month
+            if(_current_time > (_vesting_start+2592000*i)){
+
+                // check how much time has elapsed how may percentage brakctes/months 
                     //we have passed since the initLock
                 _second_in_bracket =2592000*i -2592000*(i-1);
                 
-                // For each bracket, claculate the the tokens to be released in that period  
+                // for each bracket, claculate the the tokens to be released in that period  
                 _can_release = _can_release + 
                     _tokens_promised * 
                     percent_per_milestone[i-1]/10000/2592000 * _second_in_bracket;// remember the percent_per 
@@ -302,7 +334,7 @@ contract LockContract is Context, Ownable  {
                 
             }else{
                 //If the current time is in the middle of one of the months
-                _second_in_bracket = _current_time - 2592000*(i-1)-walletToInvestor[msg.sender].lock_start;
+                _second_in_bracket = _current_time - 2592000*(i-1)-_vesting_start;
                 
                 _can_release = _can_release + 
                     _tokens_promised * 
@@ -312,14 +344,10 @@ contract LockContract is Context, Ownable  {
             }
         }
 
-
-        //Get the quatity of tokens he has already withdrawned,
-        uint256 _has_withdrawn = walletToInvestor[msg.sender].tokens_received;
-
-        //Get the amount of tokens the investor can actually withdraw: 
+        // get the amount of tokens the investor can actually withdraw: 
         uint256 _able_to_release = _can_release - _has_withdrawn;
 
-        //return 
+        // return 
         return  _able_to_release;
     }
 

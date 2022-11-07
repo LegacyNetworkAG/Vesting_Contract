@@ -34,7 +34,9 @@ $$investor[tokensPromised]*ableToRelease$$
 - Reviewed code and logic - Done
 - Math appropriate -DONE
 - See uint type along with the appropriate math -DONE
+- Add delay time 3-6 months - DONE
 - 
+- Check that the contract has enough money while creating investor structs
 ## --TO DO--Testing
 - test constructor -DONE
 - check safety of modifiers and functions -DONE
@@ -42,5 +44,4 @@ $$investor[tokensPromised]*ableToRelease$$
 - define the milestones and the payouts within the milestones -DONE
 - test the whole system in a small unix timeframe -DONE
 - check math exploitations -DONE
-- 
-- test the investor addition to the contract
+- test the investor addition to the contract -DONE

@@ -25,6 +25,8 @@ def deploy_lock_contract(connector, _wallet,_wallet_address, _wallet2_address):
     percent_per_milestone = (percent_per_milestone)
     tokens_U50ITotal = sum(tokens_U50I)
     tokens_O250ITotal = sum(tokens_O250I)
+    timeLock_O50I=300
+    timeLock_O250I=400
     tokenAdress = "0x0828ebd4c6edd086d9496e3411202b7f3160ead3"
 
     #Deploy
@@ -33,10 +35,12 @@ def deploy_lock_contract(connector, _wallet,_wallet_address, _wallet2_address):
                                         ['address[]','address[]',
                                         'uint256[]', 'uint256[]','uint256[]',
                                         'uint256','uint256',
+                                        'uint256','uint256',
                                         'address'],
                                         [addresses_O50I, addresses_O250I,
                                         tokens_U50I, tokens_O250I, percent_per_milestone,
                                         tokens_U50ITotal, tokens_O250ITotal,
+                                        timeLock_O50I, timeLock_O250I,
                                         tokenAdress
                                         ])
     time.sleep(15)
@@ -60,7 +64,9 @@ def main():
     #Connect to node
     connector = connect(1)
     deploy_lock_contract(connector, _wallet,_wallet_address, _wallet2_address)
+    
 main()
+
 # Save the time in which the contract was deployed aka when the lock begins
 dotenv_file = dotenv.find_dotenv()
 dotenv.load_dotenv(dotenv_file)

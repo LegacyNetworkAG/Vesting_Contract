@@ -44,7 +44,10 @@ def test_withdraw(_wallet, _wallet_address,
             func_params=[],
             to=_lockcontract_address,
     )
-    print(int(get_funds['decoded']['0'])/10**18)
+    if get_funds['decoded']['0'] != None:
+        print(int(get_funds['decoded']['0'])/10**18)
+    else:
+        print(get_funds['decoded'])
 
 #
 # Get initLock
@@ -74,8 +77,8 @@ def main():
     _contract_Token = Contract.fromFile("Token_Mockup/build/contracts/mock_token.json")
     Token_contract_address='0x0828ebd4c6edd086d9496e3411202b7f3160ead3'
     _lock_contract = Contract.fromFile("build\contracts\LockContract.json")
-    _lockcontract_address='0x312fd66225c3d9d0deb53c05826ec5de466608ea'
-    
+    _lockcontract_address=config('_lockcontract_address')
+
     return connector, \
            _wallet, _wallet_address, \
            _wallet2, _wallet2_address, \
@@ -97,6 +100,10 @@ test_withdraw(_wallet, _wallet_address, connector, _contract_Token,
                  Token_contract_address, _lock_contract, _lockcontract_address, investor)
 
 
+#get the time when the locking begins and the time elapsed since then
 lock_time, time_elapsed=get_initlock()
-print(format(((time_elapsed) * 500*50000*(10**18)/10000/2592000)/10**18, 'f'))
+
+if(time_elapsed>300):
+    print(format(((time_elapsed-300) * 500*50000*(10**18)/10000/2592000)/10**18, 'f'))
+
 print("Time elapsed since lock:", time_elapsed)
