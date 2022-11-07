@@ -44,7 +44,7 @@ def test_withdraw(_wallet, _wallet_address,
             func_params=[],
             to=_lockcontract_address,
     )
-    if get_funds['decoded']['0'] != None:
+    if '0' in get_funds['decoded']:
         print(int(get_funds['decoded']['0'])/10**18)
     else:
         print(get_funds['decoded'])
