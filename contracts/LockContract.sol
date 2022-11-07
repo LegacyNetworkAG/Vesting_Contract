@@ -52,6 +52,8 @@ contract LockContract is Context, Ownable  {
     uint256 num_O250I;// number of over 50k token vested investors
     uint256 totalTokens_O50I;// total tokens promised to investors with 50k-250k tokens vested
     uint256 totalTokens_O250I;// total tokens promised to investors with more than 250k tokens vested
+    uint256 timeLock_O50I;// the time lock to be applied before vesting for investors with 50k-250k tokens vested
+    uint256 timeLock_O250I;//... investors with more than 250k tokens vested
     address tokenAddress;// token address
     bool internal locked;   // boolean to prevent reentrancy
 
@@ -159,6 +161,9 @@ contract LockContract is Context, Ownable  {
         // Initialize the reentrancy variable to not locked
         locked = false;
 
+        // establish the lock time for the two types of investors
+        timeLock_O50I = _timeLock_O50I;
+        timeLock_O250I = _timeLock_O250I;
     }
 
 
@@ -187,10 +192,18 @@ contract LockContract is Context, Ownable  {
      * Emits a {ERC20Released} event.
      */
     function release() public virtual noReentrant() onlyInvestor(){
+
+        // gets the amount of tokens the investor can withdraw
         uint256 releasable = can_release_percent(msg.sender, uint256(block.timestamp));
+
+        // adds that amount to the total released amount
         erc20Released += releasable;
+
+        // emits an event
         emit ERC20Released(tokenAddress, releasable);
+        // transfers the tokens to the investor
         SafeERC20.safeTransfer(IERC20(tokenAddress), msg.sender, releasable);
+        // updates the investors struct to reflect the withdraw
         walletToInvestor[msg.sender].tokens_received += releasable;
     }
 
@@ -260,34 +273,51 @@ contract LockContract is Context, Ownable  {
     /**
      * @dev Adds a new Investor.
      */
-    function new_Investor(uint256 _amount, address _newInvestor_address, bool _under250K) public {
+    function new_Investor(uint256 _amount, address _newInvestor_address) public {
 
-        //require that the owner has enough legacy tokens to satisfy the promised tokens for locking
+        // require that the owner locks at least 50k tokens
+        require( _amount >= 50*10**18, "The investor should lock at least 50k tokens.");
+
+        // require that the owner has enough legacy tokens to satisfy the promised tokens for locking
         require(legacy_token.balanceOf(_newInvestor_address)>= _amount, 
         "You don't have enough Legacy tokens for the price requirement.");
 
+        // the investor should not already by locked
         require(walletToInvestor[_newInvestor_address].tokens_promised== 0, 
         "This address is already in the vesting contract.");
 
         // transfer the tokens to the contract
         legacy_token.transferFrom(_newInvestor_address, address(this), _amount);
 
-        if(_under250K){
+        if(_amount >= 50*10**18 && _amount < 250*10**18){
             addresses_O50I.push(_newInvestor_address);
             tokens_O50I.push(_amount);
-        }else{
-            addresses_O250I.push();
-            tokens_O250I.push(_amount);
-        }
 
-        // create the new Investor struc
-        Investor memory investor = Investor(_newInvestor_address, 
+            // create the new Investor struc
+            Investor memory investor = Investor(_newInvestor_address, 
                                                 0, 
                                                 _amount, 
-                                                uint64(block.timestamp),
+                                                block.timestamp + timeLock_O50I,
                                                 true);
-        // push the new Investor structto the Investors arra
-        walletToInvestor[_newInvestor_address]=investor;  
+
+            // push the new Investor struct to the Investors array
+            walletToInvestor[_newInvestor_address]=investor;  
+            
+        }else{
+            addresses_O250I.push(_newInvestor_address);
+            tokens_O250I.push(_amount);
+
+            // create the new Investor struc
+            Investor memory investor = Investor(_newInvestor_address, 
+                                                0, 
+                                                _amount, 
+                                                block.timestamp + timeLock_O250I,
+         
+                                                true);
+
+            // push the new Investor struct to the Investors array
+            walletToInvestor[_newInvestor_address]=investor;  
+        }
     }
 
     /**
