@@ -40,8 +40,8 @@ def test_withdraw(_wallet, _wallet_address,
     get_funds = connector.call(
             caller=_wallet_address,
             contract=_lock_contract,
-            func_name="view_can_release_percent",
-            func_params=[],
+            func_name="can_release_percent",
+            func_params=[_wallet_address],
             to=_lockcontract_address,
     )
     if '0' in get_funds['decoded']:
