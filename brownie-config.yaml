@@ -4,10 +4,10 @@ dependencies:
 compiler:
   solc:
     remappings:
-      - '@openzeppelin/contracts-upgradeable=OpenZeppelin/openzeppelin-contracts-upgradeable@4.5.0/contracts'
-      - '@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.5.0'
+      - "@openzeppelin/contracts-upgradeable=OpenZeppelin/openzeppelin-contracts-upgradeable@4.5.0/contracts"
+      - "@openzeppelin=OpenZeppelin/openzeppelin-contracts@4.5.0"
 networks:
-  default: hardhat
+  default: development
   kovan:
     verify: True
   rinkeby:

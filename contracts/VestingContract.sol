@@ -2,7 +2,7 @@
 // OpenZeppelin Contracts (last updated v4.7.0) (finance/LockContract.sol)
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/Context.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
@@ -11,10 +11,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * @title LockContract
  * @dev This contract handles the vesting of a ERC20 tokens for a given beneficiary. Custody of the _token amount
  * can be given to this contract, which will release the _token to the beneficiary following a given schedule.
- * The vesting schedule is established by a key->value pair in the form of _duration->_amounts. This two arrays
- * have the same length and are iterated by the _milestone variable
+ * The vesting schedule is established by an array of basis point. Each index of that array
+ * corresponds to a month after the vesting period starts (aka after the locking period is over)
  */
-contract LockContract is Context, Ownable {
+contract VestingContract is Context, Ownable {
     //Token
     IERC20 public legacy_token;
 
@@ -26,126 +26,21 @@ contract LockContract is Context, Ownable {
 
     //Structs
     struct Investor {
-        address investor_address; // probably can take it out
         uint256 tokens_received; // amount of tokens the Investor has received
         uint256 tokens_promised; // amount of tokens the Investor is owed
-        uint256 vesting_start; // saves the date of the initial locking of the contract
-        bool under250k_investor; // if true than it is an investor between 50k-250k, if false it is 250k+
+        uint256 vesting_start; // saves the date in which the locking period ends
+        //and the vesting (token releases) starts
     }
 
     //Variables
     address[] investor_address; // array with all the investor aaddresses
-    address[] addresses_O50I;
-    address[] addresses_O250I;
-    uint256[] tokens_O50I;
-    uint256[] tokens_O250I;
     uint256[] percent_per_milestone; //percentages per month that will be released (in basis points)
-    uint256 initLock; // initial lock period
     uint256 erc20Released; // total amount of released tokens
     uint256 numMilestones; // number of milestones (number of payments for each Investor)
-    uint256 num_O50I; // number of under 50k investors
-    uint256 num_O250I; // number of over 50k investors
     uint256 totalTokens_O50I; // total tokens promised to investors with 50k-250ks
     uint256 totalTokens_O250I; // total tokens promised to investors with more than 250ks
-    uint256 timeLock_O50I; // the time lock to be applied before vesting for investors with 50k-250ks
-    uint256 timeLock_O250I; //... investors with more than 250ks
     address tokenAddress; // token address
     bool internal locked; // boolean to prevent reentrancy
-
-    //Functions
-    /**
-     * @dev Set the beneficiary, start timestamp and locking durations and amounts.
-     */
-    constructor(
-        address[] memory _addresses_O50I, // array with the addresses of the investors with 50k to 250ks
-        address[] memory _addresses_O250I, // ... more than 250ks
-        uint256[] memory _tokens_O50I, // array with the token amount to be to the equivalent
-        // indexed address in _addresses_O50I
-        uint256[] memory _tokens_O250I, // ... addres in _addresses_O250I
-        uint256[] memory _percent_per_milestone, // has the basis point values of the percentages
-        // of tokens that should be released in total in
-        // the indexed month
-
-        uint256 _totalTokens_O50I, // sum all the tokens for the investors with with 50k-250ks
-        uint256 _totalTokens_O250I, // ... more than 250ks
-        uint256 _timeLock_O50I, // time lock period for investors with with 50k-250ks
-        uint256 _timeLock_O250I, // ... more than 250ks
-        address _tokenAddress // address of the token to be used
-    ) {
-        // marks the time point in which the contract was deployed and so the time
-        // in which the investors locking period (before vesting) started
-        initLock = block.timestamp;
-
-        // percentage of tokens an investor can withdraw at each milestone
-        percent_per_milestone = _percent_per_milestone;
-
-        // number of investors with...
-        num_O50I = _addresses_O50I.length; // with 50k-250ks
-        num_O250I = _addresses_O250I.length; // more than 250ks
-
-        // array of addresses of investors with ...
-        addresses_O50I = _addresses_O50I; // with 50k-250ks
-        addresses_O250I = _addresses_O250I; // more than 250ks
-
-        // array of tokens promised to investors with ...
-        tokens_O50I = _tokens_O50I; // with 50k-250ks
-        tokens_O250I = _tokens_O250I; // more than 250ks
-
-        // total tokens promised to investors with ...
-        totalTokens_O50I = _totalTokens_O50I; // with 50k-250ks
-        totalTokens_O250I = _totalTokens_O250I; // more than 250ks
-
-        // create an Investor struct for each investor with less than 50ks
-        for (uint256 i = 0; i < num_O50I; i++) {
-            // get the amount of tokens and the address correpsonding to this investor
-            address _investor_address = addresses_O50I[i];
-            uint256 _investor_tokens = tokens_O50I[i];
-
-            // create the new Investor struct
-            Investor memory investor = Investor(
-                _investor_address,
-                0,
-                _investor_tokens,
-                block.timestamp + _timeLock_O50I,
-                true
-            );
-
-            // map the new Investor address to its struct
-            walletToInvestor[_investor_address] = investor;
-        }
-
-        // create an Investor struct for each investor with more than 250ks
-        for (uint256 i = 0; i < num_O250I; i++) {
-            // get the amount of tokens and the address correpsonding to this investor
-            address _investor_address = addresses_O250I[i];
-            uint256 _investor_tokens = tokens_O250I[i];
-
-            // create the new Investor struct
-            Investor memory investor = Investor(
-                _investor_address,
-                0,
-                _investor_tokens,
-                block.timestamp + _timeLock_O250I,
-                false
-            );
-
-            // map the new Investor address to its struct
-            walletToInvestor[_investor_address] = investor;
-        }
-
-        // establish token address
-        tokenAddress = _tokenAddress;
-
-        // establish the IERC20 for legacy token to contract interactions
-        legacy_token = IERC20(_tokenAddress);
-
-        // Initialize the reentrancy variable to not locked
-        locked = false;
-
-        // establish the lock time for the two types of investors
-        timeLock_O50I = _timeLock_O50I;
-        timeLock_O250I = _timeLock_O250I;
-    }
 
     // Modifiers
     /**
@@ -169,26 +64,71 @@ contract LockContract is Context, Ownable {
         _;
     }
 
+    //Functions
     /**
-     * @dev Release the tokens
-     *
-     * Emits a {ERC20Released} event.
+     * @dev Set the beneficiary, start timestamp and locking durations and amounts.
      */
-    function release() public virtual noReentrant onlyInvestor {
-        // gets the amount of tokens the investor can withdraw
-        uint256 releasable = can_release_percent(msg.sender);
+    constructor(
+        address[] memory _addresses_O50I, // array with the addresses of the investors with 50k to 250ks
+        address[] memory _addresses_O250I, // ... more than 250ks
+        uint256[] memory _tokens_O50I, // array with the token amount to be to the equivalent
+        // indexed address in _addresses_O50I
+        uint256[] memory _tokens_O250I, // ... addres in _addresses_O250I
+        uint256[] memory _percent_per_milestone, // has the basis point values of the percentages
+        // of tokens that should be released in total in
+        // the indexed month
+        uint256 _timeLock_O250I, // ... more than 250ks
+        address _tokenAddress // address of the token to be used
+    ) {
+        // percentage of tokens an investor can withdraw at each milestone
+        percent_per_milestone = _percent_per_milestone;
 
-        // transfers the tokens to the investor
-        SafeERC20.safeTransfer(IERC20(tokenAddress), msg.sender, releasable);
+        // number of investors with...
+        uint256 _num_O50I = _addresses_O50I.length; // with 50k-250ks
+        uint256 _num_O250I = _addresses_O250I.length; // more than 250ks
 
-        // adds that amount to the total released amount
-        erc20Released += releasable;
+        // create an Investor struct for each investor with less than 50ks
+        for (uint256 i = 0; i < _num_O50I; i++) {
+            // get the amount of tokens and the address correpsonding to this investor
+            address _investor_address = _addresses_O50I[i];
+            uint256 _investor_tokens = _tokens_O50I[i];
 
-        // emits an event
-        emit ERC20Released(tokenAddress, releasable);
+            // create the new Investor struct
+            Investor memory investor = Investor(
+                0,
+                _investor_tokens,
+                block.timestamp
+            );
 
-        // updates the investors struct to reflect the withdraw
-        walletToInvestor[msg.sender].tokens_received += releasable;
+            // map the new Investor address to its struct
+            walletToInvestor[_investor_address] = investor;
+        }
+
+        // create an Investor struct for each investor with more than 250ks
+        for (uint256 i = 0; i < _num_O250I; i++) {
+            // get the amount of tokens and the address correpsonding to this investor
+            address _investor_address = _addresses_O250I[i];
+            uint256 _investor_tokens = _tokens_O250I[i];
+
+            // create the new Investor struct
+            Investor memory investor = Investor(
+                0,
+                _investor_tokens,
+                block.timestamp + _timeLock_O250I
+            );
+
+            // map the new Investor address to its struct
+            walletToInvestor[_investor_address] = investor;
+        }
+
+        // establish token address
+        tokenAddress = _tokenAddress;
+
+        // establish the IERC20 for legacy token to contract interactions
+        legacy_token = IERC20(_tokenAddress);
+
+        // Initialize the reentrancy variable to not locked
+        locked = false;
     }
 
     /**
@@ -198,7 +138,6 @@ contract LockContract is Context, Ownable {
     function can_release_percent(address _callerAddress)
         public
         view
-        virtual
         returns (uint256)
     {
         // get the quatity of tokens he has already withdrawned,
@@ -219,8 +158,12 @@ contract LockContract is Context, Ownable {
         // gets the time in which the investors vesting starts
         uint256 _vesting_start = walletToInvestor[_callerAddress].vesting_start;
 
-        // require that the locking time for this investor has passed and thevesting has started
-        require(_current_time > _vesting_start, "Lock time has not passed yet");
+        // require that the first month of vesting has passed (and as consequence, checks if the lock
+        //period has passed already)
+        require(
+            _current_time > _vesting_start,
+            "First month of vesting has not passed"
+        );
 
         // will save the amount that is calculated that can be released
         uint256 _can_release = 0;
@@ -233,7 +176,7 @@ contract LockContract is Context, Ownable {
             if (_current_time > (_vesting_start + 2592000 * i)) {
                 // check how much time has elapsed how may percentage brakctes/months
                 //we have passed since the initLock
-                _second_in_bracket = 2592000 * i - 2592000 * (i - 1);
+                _second_in_bracket = 2592000;
 
                 // for each bracket, claculate the the tokens to be released in that period
                 _can_release =
@@ -263,10 +206,30 @@ contract LockContract is Context, Ownable {
         }
 
         // get the amount of tokens the investor can actually withdraw:
-        uint256 _able_to_release = _can_release - _has_withdrawn;
+        return _can_release - _has_withdrawn;
+    }
 
-        // return
-        return _able_to_release;
+    /**
+     * @dev Release the tokens
+     *
+     * Emits a {ERC20Released} event.
+     */
+    function release() public virtual noReentrant onlyInvestor {
+        // gets the amount of tokens the investor can withdraw
+        uint256 releasable = can_release_percent(msg.sender);
+
+        // transfers the tokens to the investor
+        bool success = legacy_token.transfer(msg.sender, releasable);
+        require(success, "Failed to release tokens.");
+
+        // adds that amount to the total released amount
+        erc20Released += releasable;
+
+        // emits an event
+        emit ERC20Released(tokenAddress, releasable);
+
+        // updates the investors struct to reflect the withdraw
+        walletToInvestor[msg.sender].tokens_received += releasable;
     }
 
     /**
@@ -275,8 +238,8 @@ contract LockContract is Context, Ownable {
     function new_Investor(
         uint256 _amount,
         address _newInvestor_address,
-        bool _investor_type
-    ) public {
+        uint256 _timeLock
+    ) public onlyOwner {
         // the investor should not already by locked
         require(
             walletToInvestor[_newInvestor_address].tokens_promised == 0,
@@ -284,38 +247,17 @@ contract LockContract is Context, Ownable {
         );
 
         // transfer the tokens to the contract
-        legacy_token.transferFrom(_newInvestor_address, address(this), _amount);
+        bool success = legacy_token.transfer(address(this), _amount);
+        require(success, "Failed to deposit tokens.");
 
-        if (_investor_type) {
-            addresses_O50I.push(_newInvestor_address);
-            tokens_O50I.push(_amount);
+        // create the new Investor struc
+        Investor memory investor = Investor(
+            0,
+            _amount,
+            block.timestamp + _timeLock
+        );
 
-            // create the new Investor struc
-            Investor memory investor = Investor(
-                _newInvestor_address,
-                0,
-                _amount,
-                block.timestamp + timeLock_O50I,
-                true
-            );
-
-            // push the new Investor struct to the Investors array
-            walletToInvestor[_newInvestor_address] = investor;
-        } else {
-            addresses_O250I.push(_newInvestor_address);
-            tokens_O250I.push(_amount);
-
-            // create the new Investor struc
-            Investor memory investor = Investor(
-                _newInvestor_address,
-                0,
-                _amount,
-                block.timestamp + timeLock_O250I,
-                true
-            );
-
-            // push the new Investor struct to the Investors array
-            walletToInvestor[_newInvestor_address] = investor;
-        }
+        // push the new Investor struct to the Investors array
+        walletToInvestor[_newInvestor_address] = investor;
     }
 }
