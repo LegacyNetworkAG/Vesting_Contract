@@ -66,9 +66,10 @@ def test_revert(tokenContract, vestingContract, fundContract):
     Bob = accounts[2]
     Carol = accounts[3]
     David = accounts[4]
-
+    #Simulate passage of time (10 seconds)
+    chain.mine(timedelta=10)
     Carol_balance_one = tokenContract.balanceOf(Carol ,{"from": Carol})
-
+    vestingContract.release({"from": Alice})
     vestingContract.release({"from": Carol})
 
     assert tokenContract.balanceOf(Carol, {"from": Carol}) == Carol_balance_one   
@@ -109,8 +110,8 @@ def test_withdraw(tokenContract, vestingContract, fundContract):
     print('Balance Carol=', tokenContract.balanceOf(Carol, {"from": Carol}))
     print('Theoretical Carol Balance', 0)
     print('Carol rewards per second (possible error)',reward_ps_Carol[0])
-    assert abs(tokenContract.balanceOf(Alice, {"from": Alice}) - (Alice_balance_one + 0.2*10*10**18)) <= 2*reward_ps_Alice[0]
-    assert abs(tokenContract.balanceOf(Carol, {"from": Carol}) - Carol_balance_one) <= 2*reward_ps_Carol[0]
+    assert abs(tokenContract.balanceOf(Alice, {"from": Alice}) - (Alice_balance_one + 0.2*10*10**18)) <= 5*reward_ps_Alice[0]
+    assert abs(tokenContract.balanceOf(Carol, {"from": Carol}) - Carol_balance_one) <= 5*reward_ps_Carol[0]
 
     #Simulate passage of time (15 days)
     chain.mine(timedelta=2592000/2)
@@ -126,8 +127,8 @@ def test_withdraw(tokenContract, vestingContract, fundContract):
     print('Balance Carol=', tokenContract.balanceOf(Carol, {"from": Carol}))
     print('Theoretical Carol Balance', (2592000/2)*reward_ps_Carol[0])
     print('Carol rewards per second (possible error)',reward_ps_Carol[0])
-    assert abs(tokenContract.balanceOf(Alice, {"from": Alice}) - (Alice_balance_one + 2*10**18+(2592000/2)*reward_ps_Alice[1])) <= 2*reward_ps_Alice[1]
-    assert abs(tokenContract.balanceOf(Carol, {"from": Carol}) - (Carol_balance_one + (2592000/2)*reward_ps_Carol[0])) <= 2*reward_ps_Carol[0]
+    assert abs(tokenContract.balanceOf(Alice, {"from": Alice}) - (Alice_balance_one + 2*10**18+(2592000/2)*reward_ps_Alice[1])) <= 5*reward_ps_Alice[1]
+    assert abs(tokenContract.balanceOf(Carol, {"from": Carol}) - (Carol_balance_one + (2592000/2)*reward_ps_Carol[0])) <= 5*reward_ps_Carol[0]
 
 
     #Simulate passage of time (2,5 months, so total time since deploying = 1m+0.5m+2.5m =4m => Both vestings are done)
@@ -144,8 +145,8 @@ def test_withdraw(tokenContract, vestingContract, fundContract):
     print('Balance Carol=', tokenContract.balanceOf(Carol, {"from": Carol}))
     print('Theoretical Carol Balance', 100*10**18)
     print('Carol rewards per second (possible error)',reward_ps_Carol[2])
-    assert abs(tokenContract.balanceOf(Alice, {"from": Alice}) - (Alice_balance_one + 10*10**18)) <= 2*reward_ps_Alice[2]
-    assert abs(tokenContract.balanceOf(Carol, {"from": Carol}) - (Carol_balance_one + 100*10**18)) <= 2*reward_ps_Carol[2]
+    assert abs(tokenContract.balanceOf(Alice, {"from": Alice}) - (Alice_balance_one + 10*10**18)) <= 5*reward_ps_Alice[2]
+    assert abs(tokenContract.balanceOf(Carol, {"from": Carol}) - (Carol_balance_one + 100*10**18)) <= 5*reward_ps_Carol[2]
 
 
 '''

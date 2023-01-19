@@ -162,7 +162,7 @@ contract VestingContract is Context, Ownable {
         //period has passed already)
         require(
             _current_time > _vesting_start,
-            "First month of vesting has not passed"
+            "Vesting period has not passed"
         );
 
         // will save the amount that is calculated that can be released

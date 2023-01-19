@@ -1,10 +1,7 @@
 {
   "contracts": {
-    "LockContract": "dfe17bc1c7125041326c1f4890f676e79c8b2954",
-    "OpenZeppelin/openzeppelin-contracts@4.5.0/Address": "1ce946f6a4eaa185320328620ccf999b9e86db7c",
     "OpenZeppelin/openzeppelin-contracts@4.5.0/ERC20": "9f51321b87f6e57539e2b7784d2354aaec45d827",
-    "OpenZeppelin/openzeppelin-contracts@4.5.0/SafeERC20": "1ce946f6a4eaa185320328620ccf999b9e86db7c",
-    "VestingContract": "7e293e1a7aa9a8c2594aaf0b4b0370e23264bd89",
+    "VestingContract": "194bc31b3f0095acbd99a84373803588fe650546",
     "mock_token": "e70e45c691c14b6b30fa2edad5f301f079d245b3"
   },
   "tests": {
@@ -12,15 +9,15 @@
       "coverage": false,
       "isolated": false,
       "results": "F.F.",
-      "sha1": "f9f1c14af187631e4c5e4b2bf0cafcba0e55d6ae",
+      "sha1": "5f041e80c9588d9d4173a168ceca1e94e1adf91f",
       "txhash": [
-        "28dd71661b07d93ddaea30a4ad1f9b5a7e94817e",
-        "e6f7ede31654f25abca288c3f5fa135ebed7e933"
+        "416a650fc22816abf797c26cc92f3ae276ef2132",
+        "e7b7b2b2eb3017f8b4aaf52ebec159223ccbc79e"
       ]
     }
   },
   "tx": {
-    "28dd71661b07d93ddaea30a4ad1f9b5a7e94817e": {
+    "416a650fc22816abf797c26cc92f3ae276ef2132": {
       "VestingContract": {
         "0": [
           [],
@@ -39,7 +36,7 @@
         ]
       }
     },
-    "e6f7ede31654f25abca288c3f5fa135ebed7e933": {
+    "e7b7b2b2eb3017f8b4aaf52ebec159223ccbc79e": {
       "VestingContract": {
         "0": [
           [],
