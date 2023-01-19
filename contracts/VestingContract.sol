@@ -28,7 +28,7 @@ contract VestingContract is Context, Ownable {
     struct Investor {
         uint256 tokens_received; // amount of tokens the Investor has received
         uint256 tokens_promised; // amount of tokens the Investor is owed
-        uint256 vesting_start; // saves the date in which the locking period ends
+        uint256 vesting_start; // saves the date in which the locking/cliff period ends
         //and the vesting (token releases) starts
     }
 
@@ -158,11 +158,11 @@ contract VestingContract is Context, Ownable {
         // gets the time in which the investors vesting starts
         uint256 _vesting_start = walletToInvestor[_callerAddress].vesting_start;
 
-        // require that the first month of vesting has passed (and as consequence, checks if the lock
+        // require that the first month of cliff has passed (and as consequence, checks if the lock
         //period has passed already)
         require(
             _current_time > _vesting_start,
-            "Vesting period has not passed"
+            "Locking/Cliff period has not passed"
         );
 
         // will save the amount that is calculated that can be released

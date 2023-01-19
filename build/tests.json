@@ -1,7 +1,7 @@
 {
   "contracts": {
     "OpenZeppelin/openzeppelin-contracts@4.5.0/ERC20": "9f51321b87f6e57539e2b7784d2354aaec45d827",
-    "VestingContract": "194bc31b3f0095acbd99a84373803588fe650546",
+    "VestingContract": "839dc7e09be6cf0852a6efed7384ff3529272e07",
     "mock_token": "e70e45c691c14b6b30fa2edad5f301f079d245b3"
   },
   "tests": {
@@ -12,7 +12,7 @@
       "sha1": "5f041e80c9588d9d4173a168ceca1e94e1adf91f",
       "txhash": [
         "416a650fc22816abf797c26cc92f3ae276ef2132",
-        "e7b7b2b2eb3017f8b4aaf52ebec159223ccbc79e"
+        "57cfdec285615eb00bec4ba7d31a3eed249101a4"
       ]
     }
   },
@@ -36,7 +36,7 @@
         ]
       }
     },
-    "e7b7b2b2eb3017f8b4aaf52ebec159223ccbc79e": {
+    "57cfdec285615eb00bec4ba7d31a3eed249101a4": {
       "VestingContract": {
         "0": [
           [],
