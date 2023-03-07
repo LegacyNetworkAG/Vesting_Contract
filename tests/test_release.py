@@ -65,12 +65,31 @@ def test_revertRelease(tokenContract, vesting, fundAndVest):
     Alice = accounts[1]
     Bob = accounts[2]
     Carol = accounts[3]
-    David = accounts[4]  
+    David = accounts[4]
+    Hacker = accounts[5]
+    secondsInMonth = 2592000  
 
-    # reverts because cliff has not ended
+    # reverts because cliff (1 month) has not ended (for O250 only aka Carol and David)
+    chain.mine(timedelta=secondsInMonth/2)# time passed since vesting = 1/2 month
+
+    vesting.release({"from": Alice})
+    vesting.release({"from": Bob})
+    with brownie.reverts():
+        vesting.release({"from": Carol})
+    with brownie.reverts():
+        vesting.release({"from": David})
+
     # reverts because it is not a vester
+    chain.mine(timedelta=secondsInMonth*2)# time passed since vesting = 2,5 month
+    with brownie.reverts():
+        vesting.release({"from": Hacker})
+    
     # reverts because it has already withdrawn all promised tokens
-
+    chain.mine(timedelta=secondsInMonth*5)# time passed since vesting = 7.5 month > vesting+cliff=7months
+    vesting.release({"from": Alice})
+    assert tokenContract.balanceOf(Alice, {"from": Alice}) == 10*10**18
+    with brownie.reverts():
+        vesting.release({"from": Alice})
 '''
 Test release regular situations
 '''
