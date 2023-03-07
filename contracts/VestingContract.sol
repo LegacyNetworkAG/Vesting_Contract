@@ -41,8 +41,9 @@ contract VestingContract is Ownable {
     //Errors
     error contractLacksFunds(uint256 amountNeeded, uint256 contract_balance);
     error LockOrCliffNotOver(uint256 currentTime, uint256 vestingStart);
-    error addressAmountMismatch(uint256 _numamounts, uint256 _num_addresses);
-    error percSumIncorrect(uint256 _perc_sum);
+    error addressAmountMismatch(uint256 numAmounts, uint256 numAddresses);
+    error addressAlreadyVested(uint256 investorAddress);
+    error percSumIncorrect(uint256 percSum);
     error allTokensClaimed();
     error failedRelease();
     error failedDeposit();
@@ -138,6 +139,11 @@ contract VestingContract is Ownable {
             address investorAddress = addressesO50I[i];
             uint256 investorTokens = tokensO50I[i];
 
+            // the investor should not already by locked
+            if (walletToInvestor[investorAddress].tokens_promised != 0) {
+                revert addressAlreadyVested(investorAddress);
+            }
+
             // create the new Investor struct
             Investor memory investor = Investor(
                 0,
@@ -157,6 +163,11 @@ contract VestingContract is Ownable {
             // get the amount of tokens and the address correpsonding to this investor
             address investorAddress = addressesO250I[i];
             uint256 investorTokens = tokensO250I[i];
+
+            // the investor should not already by locked
+            if (walletToInvestor[investorAddress].tokens_promised != 0) {
+                revert addressAlreadyVested(investorAddress);
+            }
 
             // create the new Investor struct
             Investor memory investor = Investor(
@@ -214,12 +225,10 @@ contract VestingContract is Ownable {
         uint256 timeLock,
         address newInvestorAddress
     ) public onlyOwner {
-        // the investor should not already by locked
-        require(
-            walletToInvestor[newInvestorAddress].tokens_promised == 0,
-            "Address already vesting."
-        );
-
+        // the investor should not already be vested
+        if (walletToInvestor[newInvestorAddress].tokens_promised != 0) {
+            revert addressAlreadyVested(newInvestorAddress);
+        }
         // create the new Investor struc
         Investor memory investor = Investor(
             0,
@@ -272,8 +281,8 @@ contract VestingContract is Ownable {
         // gets the time in which the investors vesting starts
         uint256 vestingStart = walletToInvestor[callerAddress].vesting_start;
 
-        // require that the first month of cliff has passed (and as consequence, checks if the lock
-        //period has passed already)
+        /* require that the first month of cliff has passed (and as consequence, checks if the lock
+        period has passed already)*/
         if (currentTime < vestingStart) {
             revert LockOrCliffNotOver(currentTime, vestingStart);
         }
