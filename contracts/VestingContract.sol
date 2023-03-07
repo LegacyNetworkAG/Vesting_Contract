@@ -101,7 +101,7 @@ contract VestingContract is Ownable {
 
     // Functions
     /**
-     * @dev Set the initial investors and their promised tokens
+     * @dev Set the multiple investors and their promised tokens
      */
     function newMulInvestors(
         address[] memory addressesO50I, // array with the addresses of the investors with 50k to 250ks

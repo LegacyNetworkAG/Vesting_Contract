@@ -39,7 +39,8 @@ def test_revertNewMull(tokenContract, vesting):
     Alice = accounts[1]
     Bob = accounts[2]
     Carol = accounts[3]
-    David = accounts[4]  
+    David = accounts[4] 
+    Hacker = accounts[5] 
 
     _timeLock_O250I = 2592000 #1 month lock period
 
@@ -128,6 +129,14 @@ def test_revertNewMull(tokenContract, vesting):
                                         _tokens_O250I,
                                         _timeLock_O250I,
                                         {"from":legacy_network})
+    # should revert because it is not the contract's owner who calls the function
+    with brownie.reverts():
+        vesting.newMulInvestors(_addresses_O50I,
+                                        _addresses_O250I,
+                                        _tokens_O50I, 
+                                        _tokens_O250I,
+                                        _timeLock_O250I,
+                                        {"from":Hacker})
 '''
 Test regular scenarios for newMullInvestors
 &
