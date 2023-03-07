@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
@@ -13,6 +14,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  */
 contract VestingContract is Ownable {
     // Token
+    using SafeERC20 for IERC20;
     IERC20 immutable LEGACY_TOKEN;
 
     // Structs
@@ -42,11 +44,11 @@ contract VestingContract is Ownable {
     error contractLacksFunds(uint256 amountNeeded, uint256 contract_balance);
     error LockOrCliffNotOver(uint256 currentTime, uint256 vestingStart);
     error addressAmountMismatch(uint256 numAmounts, uint256 numAddresses);
-    error addressAlreadyVested(uint256 investorAddress);
+    error addressAlreadyVested(address investorAddress);
     error percSumIncorrect(uint256 percSum);
     error allTokensClaimed();
-    error failedRelease();
-    error failedDeposit();
+    //error failedRelease();
+    //error failedDeposit();
     error notInvestor();
 
     // Modifiers
@@ -154,7 +156,7 @@ contract VestingContract is Ownable {
             walletToInvestor[investorAddress] = investor;
 
             // add to the investor array of addresses
-            investorAddress.append(investorAddress);
+            investorAddresses.push(investorAddress);
         }
 
         // create an Investor struct for each investor with more than 250ks
@@ -179,7 +181,7 @@ contract VestingContract is Ownable {
             walletToInvestor[investorAddress] = investor;
 
             // add to the investor array of addresses
-            investorAddress.append(investorAddress);
+            investorAddresses.push(investorAddress);
         }
 
         // update the amount of tokens vested
@@ -201,10 +203,7 @@ contract VestingContract is Ownable {
             releasable;
 
         // transfers the tokens to the investor
-        bool success = LEGACY_TOKEN.transfer(msg.sender, releasable);
-        if (!success) {
-            revert failedRelease();
-        }
+        LEGACY_TOKEN.safeTransfer(msg.sender, releasable);
 
         // adds that amount to the total released amount
         erc20Released = erc20Released + releasable;
@@ -239,20 +238,13 @@ contract VestingContract is Ownable {
         walletToInvestor[newInvestorAddress] = investor;
 
         // add to the investor array of addresses
-        investorAddress.append(investorAddress);
+        investorAddresses.push(newInvestorAddress);
 
         // transfer the tokens to the contract
-        bool success = LEGACY_TOKEN.transferFrom(
-            msg.sender,
-            address(this),
-            amount
-        );
-        if (!success) {
-            revert failedDeposit();
-        }
+        LEGACY_TOKEN.safeTransferFrom(msg.sender, address(this), amount);
 
         // update the amount of tokens vested
-        totalTokensVested = totalTokensVested + releasable;
+        totalTokensVested = totalTokensVested + amount;
     }
 
     /**
