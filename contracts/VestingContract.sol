@@ -126,11 +126,11 @@ contract VestingContract is Ownable {
         uint256 numO250I = addressesO250I.length; // more than 250ks
 
         // require that the  number of addresses is equal to the token amounts
-        if (numO50I != addressesO50I.length) {
+        if (numO50I != tokensO50I.length) {
             revert addressAmountMismatch(numO50I, addressesO50I.length);
         }
 
-        if (numO250I != addressesO250I.length) {
+        if (numO250I != tokensO250I.length) {
             revert addressAmountMismatch(numO250I, addressesO250I.length);
         }
 
