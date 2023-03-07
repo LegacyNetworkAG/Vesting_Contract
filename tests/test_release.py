@@ -90,6 +90,7 @@ def test_revertRelease(tokenContract, vesting, fundAndVest):
     assert tokenContract.balanceOf(Alice, {"from": Alice}) == 10*10**18
     with brownie.reverts():
         vesting.release({"from": Alice})
+        
 '''
 Test release regular situations
 '''

@@ -5,3 +5,4 @@ __pycache__
 scripts
 reports
 interfaces
+.pytest_cache
