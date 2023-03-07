@@ -12,10 +12,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
  * corresponds to a month after the vesting period starts (aka after the locking period is over)
  */
 contract VestingContract is Ownable {
-    //Token
+    // Token
     IERC20 immutable LEGACY_TOKEN;
 
-    //Structs
+    // Structs
     struct Investor {
         uint256 tokens_received; // amount of tokens the Investor has received
         uint256 tokens_promised; // amount of tokens the Investor is owed
@@ -23,7 +23,7 @@ contract VestingContract is Ownable {
         //and the vesting (token releases) starts
     }
 
-    //Mappings
+    // Mappings
     mapping(address => Investor) public walletToInvestor;
 
     //Variables
@@ -35,10 +35,10 @@ contract VestingContract is Ownable {
     address public immutable TOKEN_ADDRESS; // token address
     bool internal locked; // boolean to prevent reentrancy
 
-    //Events
+    // Events
     event ERC20Released(address indexed _token, uint256 amount);
 
-    //Errors
+    // Errors
     error contractLacksFunds(uint256 amountNeeded, uint256 contract_balance);
     error LockOrCliffNotOver(uint256 currentTime, uint256 vestingStart);
     error addressAmountMismatch(uint256 numAmounts, uint256 numAddresses);
@@ -97,8 +97,7 @@ contract VestingContract is Ownable {
         locked = false;
     }
 
-    //Functions
-
+    // Functions
     /**
      * @dev Set the initial investors and their promised tokens
      */
