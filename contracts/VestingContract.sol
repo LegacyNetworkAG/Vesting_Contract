@@ -78,22 +78,22 @@ contract VestingContract is Ownable {
                                                 of tokens that should be released in total in
                                                 the indexed month
                                                 */
-        address _TOKEN_ADDRESS // address of the token to be used
+        address token_address_ // address of the token to be used
     ) {
         // check if the percentages add up to 100%
-        uint256 _perc_sum = sumArr(percentPerMilestone_);
-        if (_perc_sum != 10_000) {
-            revert percSumIncorrect(_perc_sum);
+        uint256 percSum = sumArr(percentPerMilestone_);
+        if (percSum != 10_000) {
+            revert percSumIncorrect(percSum);
         }
 
         // percentage of tokens an investor can withdraw at each milestone
         percentPerMilestone = percentPerMilestone_;
 
         // establish token address
-        TOKEN_ADDRESS = _TOKEN_ADDRESS;
+        TOKEN_ADDRESS = token_address_;
 
         // establish the IERC20 for legacy token to contract interactions
-        LEGACY_TOKEN = IERC20(_TOKEN_ADDRESS);
+        LEGACY_TOKEN = IERC20(TOKEN_ADDRESS);
 
         // Initialize the reentrancy variable to not locked
         locked = false;

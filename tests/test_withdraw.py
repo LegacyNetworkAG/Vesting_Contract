@@ -30,13 +30,14 @@ def vestingContract(tokenContract):
     _timeLock_O250I = 2592000 #1 month lock period
     _tokenAddress = tokenContract
     # deploy Staking contract
-    vesting = VestingContract.deploy(_addresses_O50I,
+    vesting = VestingContract.deploy(_percent_per_milestone,
+                                        _tokenAddress,
+                                        {"from":legacy_network})
+    vesting = VestingContract.newMulInvestors(_addresses_O50I,
                                         _addresses_O250I,
                                         _tokens_O50I, 
                                         _tokens_O250I,
-                                        _percent_per_milestone,
                                         _timeLock_O250I,
-                                        _tokenAddress,
                                         {"from":legacy_network})
     # print contract address
     print(f"Vesting contract deployed at {vesting}")
