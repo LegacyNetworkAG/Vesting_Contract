@@ -69,10 +69,12 @@ contract VestingContract is Ownable {
         _;
     }
 
+    // Constructor
     constructor(
-        uint256[] memory percentPerMilestone_, // has the basis point values of the percentages
-        // of tokens that should be released in total in
-        // the indexed month
+        uint256[] memory percentPerMilestone_, /* has the basis point values of the percentages
+                                                of tokens that should be released in total in
+                                                the indexed month
+                                                */
         address _TOKEN_ADDRESS // address of the token to be used
     ) {
         // check if the percentages add up to 100%
@@ -102,8 +104,8 @@ contract VestingContract is Ownable {
     function newMulInvestors(
         address[] memory addressesO50I, // array with the addresses of the investors with 50k to 250ks
         address[] memory addressesO250I, // ... more than 250ks
-        uint256[] memory tokensO50I, // array with the token amount to be to the equivalent
-        // indexed address in addressesO50I
+        uint256[] memory tokensO50I, /* array with the token amount to be to the equivalent
+         indexed address in addressesO50I */
         uint256[] memory tokensO250I, // ... addres in addressesO250I
         uint256 timeLockO250I // ... more than 250ks
     ) public onlyOwner {
