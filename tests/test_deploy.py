@@ -43,11 +43,13 @@ def test_revertDeployment(tokenContract):
                                         {"from":legacy_network})  
         
     # reverts because the address is a zero address
-    # _percent_per_milestone = [2000, 4000, 4000]
-    # with brownie.reverts():
-    #     vesting = VestingContract.deploy(_percent_per_milestone,
-    #                                     '0x0000000000000000000000000000000000000000',
-    #                                     {"from":legacy_network})
+    _percent_per_milestone = [2000, 4000, 4000]
+    with brownie.reverts():
+        vesting = VestingContract.deploy(_percent_per_milestone,
+                                        '0x0000000000000000000000000000000000000000',
+                                        {"from":legacy_network})
+
+
 
 
 '''

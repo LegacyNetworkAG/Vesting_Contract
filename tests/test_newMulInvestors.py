@@ -45,7 +45,7 @@ def test_revertNewMull(tokenContract, vesting):
 
     _timeLock_O250I = 2592000 #1 month lock period
 
-    # should revert because the contract doesn't have enough funds
+    # should revert because the contract doesn't have enough funds (needs 330 and only gets 1 in funding)
     tokenContract.transfer(vesting,
                             1*10**18,
                             {"from": legacy_network})
@@ -95,8 +95,8 @@ def test_revertNewMull(tokenContract, vesting):
     # should revert because there are 2 equal users (Bob) in 050
     _addresses_O50I = [Alice, Bob, Bob]
     _addresses_O250I = [Carol, David]
-    _tokens_O50I = [10*10**18, 20*10**18]
-    _tokens_O250I = [100*10**18]
+    _tokens_O50I = [10*10**18, 10*10**18, 10*10**18]
+    _tokens_O250I = [100*10**18, 200*10**18]
     with brownie.reverts():
         vesting.newMulInvestors(_addresses_O50I,
                                         _addresses_O250I,
@@ -109,7 +109,7 @@ def test_revertNewMull(tokenContract, vesting):
     _addresses_O50I = [Alice, Bob]
     _addresses_O250I = [Carol, David, Carol]
     _tokens_O50I = [10*10**18, 20*10**18]
-    _tokens_O250I = [100*10**18]
+    _tokens_O250I = [100*10**18, 100*10**18, 100*10**18]
     with brownie.reverts():
         vesting.newMulInvestors(_addresses_O50I,
                                         _addresses_O250I,
@@ -122,7 +122,7 @@ def test_revertNewMull(tokenContract, vesting):
     _addresses_O50I = [Alice, Bob]
     _addresses_O250I = [Carol, David, Alice]
     _tokens_O50I = [10*10**18, 20*10**18]
-    _tokens_O250I = [100*10**18]
+    _tokens_O250I = [100*10**18, 100*10**18, 100*10**18]
     with brownie.reverts():
         vesting.newMulInvestors(_addresses_O50I,
                                         _addresses_O250I,
@@ -132,6 +132,10 @@ def test_revertNewMull(tokenContract, vesting):
                                         {"from":legacy_network})
         
     # should revert because it is not the contract's owner who calls the function
+    _addresses_O50I = [Alice, Bob]
+    _addresses_O250I = [Carol, David]
+    _tokens_O50I = [10*10**18, 20*10**18]
+    _tokens_O250I = [100*10**18, 200*10**18]
     with brownie.reverts():
         vesting.newMulInvestors(_addresses_O50I,
                                         _addresses_O250I,
@@ -169,7 +173,32 @@ def test_revertNewMull(tokenContract, vesting):
                                         _tokens_O250I,
                                         _timeLock_O250I,
                                         {"from":legacy_network})
+    
+    # reverts because the address is a zero address
+    _addresses_O50I = [Alice, '0x0000000000000000000000000000000000000000']
+    _addresses_O250I = [Carol, David]
+    _tokens_O50I = [10*10**18, 20*10**18]
+    _tokens_O250I = [100*10**18, 200*10**18]
+    with brownie.reverts():
+        vesting.newMulInvestors(_addresses_O50I,
+                                        _addresses_O250I,
+                                        _tokens_O50I, 
+                                        _tokens_O250I,
+                                        _timeLock_O250I,
+                                        {"from":legacy_network})
         
+    # reverts because the address is the contract's own address
+    _addresses_O50I = [Alice, Bob]
+    _addresses_O250I = [Carol, vesting]
+    _tokens_O50I = [10*10**18, 20*10**18]
+    _tokens_O250I = [100*10**18, 200*10**18]
+    with brownie.reverts():
+        vesting.newMulInvestors(_addresses_O50I,
+                                        _addresses_O250I,
+                                        _tokens_O50I, 
+                                        _tokens_O250I,
+                                        _timeLock_O250I,
+                                        {"from":legacy_network})       
 '''
 Test regular scenarios for newMullInvestors
 &

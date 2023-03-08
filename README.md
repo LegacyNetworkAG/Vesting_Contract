@@ -1,15 +1,9 @@
-## --TO DO--Testing
-
-- in test_deploy: test for addresses that aren't valid wallets and 0 address
-- in test_newInvestor: test for addresses that aren't valid wallets and 0 address
-- in test_newMulInvestors: test for addresses that aren't valid wallets and 0 address
-
 # Tests
 
 ## Deploy:
 
 - reverts because percentages don't add up to 100%
-- reverts because the address is a zero address - TO DO!!!!
+- reverts because the address is the zero address
 - reverts because there are more than 120 months in the vesting percentages
 - regular pass and deploy
 
@@ -17,14 +11,13 @@
 
 - should revert because the Owner doesn't have enough funds
 - should revert because it is not the contract's owner who calls the function
-- reverts because the address is a zero address - TO DO!!!!
 - regular pass
 - should release all funds to Alice
 
 ## newMulInvestor
 
 - should revert because the contract doesn't have enough funds
-- reverts because the address is a zero address - TO DO!!!!
+- reverts because the address is the zero address or the contracts own address (avoid locked funds)
 - should revert because addresses and token amounts for O50 mismatch
 - should revert because addresses and token amounts for O250 mismatch
 - should revert because there are 2 equal users (Bob) in 050

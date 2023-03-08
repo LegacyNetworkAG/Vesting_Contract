@@ -46,10 +46,9 @@ contract VestingContract is Ownable {
     error LockOrCliffNotOver(uint256 currentTime, uint256 vestingStart);
     error inputTooLarge(uint8 intendedVal, uint256 val);
     error addressAlreadyVested(address investorAddress);
+    error invalidAddress(address inputAddress);
     error percSumIncorrect(uint256 percSum);
     error allTokensClaimed();
-    //error failedRelease();
-    //error failedDeposit();
     error notInvestor();
 
     // Modifiers
@@ -91,6 +90,11 @@ contract VestingContract is Ownable {
         // establish a limit of 10 years for vesting period
         if (percentPerMilestone_.length > 120) {
             revert inputTooLarge(120, percentPerMilestone_.length);
+        }
+
+        // verify it is not the zero address (avoid locked funds)
+        if (token_address_ == address(0)) {
+            revert invalidAddress(token_address_);
         }
 
         // percentage of tokens an investor can withdraw at each milestone
@@ -158,6 +162,14 @@ contract VestingContract is Ownable {
                 revert addressAlreadyVested(investorAddress);
             }
 
+            // verify it is not the zero address of this contracts address (avoid locked funds)
+            if (
+                investorAddress == address(0) ||
+                investorAddress == address(this)
+            ) {
+                revert invalidAddress(investorAddress);
+            }
+
             // create the new Investor struct
             Investor memory investor = Investor(
                 0,
@@ -181,6 +193,14 @@ contract VestingContract is Ownable {
             // the investor should not already by locked
             if (walletToInvestor[investorAddress].tokens_promised != 0) {
                 revert addressAlreadyVested(investorAddress);
+            }
+
+            // verify it is not the zero address of this contracts address (avoid locked funds)
+            if (
+                investorAddress == address(0) ||
+                investorAddress == address(this)
+            ) {
+                revert invalidAddress(investorAddress);
             }
 
             // create the new Investor struct
