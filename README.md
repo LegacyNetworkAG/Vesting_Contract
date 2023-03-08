@@ -1,5 +1,7 @@
 ## --TO DO--Testing
 
+- in test_deploy: test for addresses that aren't valid wallets and 0 address
+- in test_newInvestor: test for addresses that aren't valid wallets and 0 address
 - in test_newMulInvestors: test for addresses that aren't valid wallets and 0 address
 
 # Tests
