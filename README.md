@@ -18,6 +18,7 @@
 - should revert because it is not the contract's owner who calls the function
 - reverts because the address is a zero address - TO DO!!!!
 - regular pass
+- should release all funds to Alice
 
 ## newMulInvestor
 

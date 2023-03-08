@@ -77,12 +77,12 @@ def test_regularNewMull(tokenContract, vesting):
     timeLock = 2592000 #1 month lock period
 
     # should pass
-    tokenContract.approve(vesting, 100*10**18, {"from": legacy_network})
+    tokenContract.approve(vesting, amount, {"from": legacy_network})
     vesting.newInvestor(amount,
                                 timeLock,
                                 Alice,
                                 {"from":legacy_network})
-    tokenContract.approve(vesting, 100*10**18, {"from": legacy_network})
+    tokenContract.approve(vesting, amount, {"from": legacy_network})
     vesting.newInvestor(amount,
                                 timeLock,
                                 Bob,
@@ -94,3 +94,10 @@ def test_regularNewMull(tokenContract, vesting):
                                 timeLock,
                                 Alice,
                                 {"from":legacy_network})
+        
+    # should release all funds to Alice
+    secondsInMonth = 2592000 
+    assert tokenContract.balanceOf(Alice, {'from': Alice}) ==  0
+    chain.mine(timedelta=secondsInMonth*7)# time passed since vesting = 7 months
+    vesting.release({"from": Alice})
+    assert tokenContract.balanceOf(Alice, {'from': Alice}) ==  amount
