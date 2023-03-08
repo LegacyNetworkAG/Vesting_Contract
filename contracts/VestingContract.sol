@@ -74,10 +74,11 @@ contract VestingContract is Ownable {
 
     // Constructor
     constructor(
-        uint256[] memory percentPerMilestone_, /* has the basis point values of the percentages
+        uint256[]
+            memory percentPerMilestone_ /* has the basis point values of the percentages
                                                 of tokens that should be released in total in
                                                 the indexed month
-                                                */
+                                                */,
         address token_address_ // address of the token to be used
     ) {
         // check if the percentages add up to 100%
@@ -106,8 +107,9 @@ contract VestingContract is Ownable {
     function newMulInvestors(
         address[] memory addressesO50I, // array with the addresses of the investors with 50k to 250ks
         address[] memory addressesO250I, // ... more than 250ks
-        uint256[] memory tokensO50I, /* array with the token amount to be to the equivalent
-         indexed address in addressesO50I */
+        uint256[]
+            memory tokensO50I /* array with the token amount to be to the equivalent
+         indexed address in addressesO50I */,
         uint256[] memory tokensO250I, // ... addres in addressesO250I
         uint256 timeLockO250I // ... more than 250ks
     ) public onlyOwner {
@@ -227,6 +229,7 @@ contract VestingContract is Ownable {
         if (walletToInvestor[newInvestorAddress].tokens_promised != 0) {
             revert addressAlreadyVested(newInvestorAddress);
         }
+
         // create the new Investor struc
         Investor memory investor = Investor(
             0,
@@ -251,11 +254,9 @@ contract VestingContract is Ownable {
      * @dev Calculates and returns the amount of tokens that can be withdrawn,
      * as function of milestones passed.
      */
-    function canReleasePercent(address callerAddress)
-        public
-        view
-        returns (uint256)
-    {
+    function canReleasePercent(
+        address callerAddress
+    ) public view returns (uint256) {
         // get the quatity of tokens he has already withdrawned,
         uint256 hasWithdrawn = walletToInvestor[callerAddress].tokens_received;
         // gets the investors promised tokens
@@ -320,11 +321,9 @@ contract VestingContract is Ownable {
     /**
      * @dev Check if the contract has funds for the multiple users the owner wants to add
      */
-    function sumArr(uint256[] memory arr)
-        internal
-        pure
-        returns (uint256 result)
-    {
+    function sumArr(
+        uint256[] memory arr
+    ) internal pure returns (uint256 result) {
         for (uint256 i = 0; i < arr.length; ++i) {
             result = result + arr[i];
         }
