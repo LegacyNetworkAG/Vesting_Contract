@@ -1,5 +1,5 @@
 import pytest
-from web3 import Web3
+import itertools
 import brownie
 from brownie import accounts, chain, mock_token, VestingContract
 
@@ -30,10 +30,20 @@ def test_revertDeployment(tokenContract):
         vesting = VestingContract.deploy(_percent_per_milestone,
                                         _tokenAddress,
                                         {"from":legacy_network})
-    
-    _percent_per_milestone = [2000, 4000, 4000]
+        
+    # reverts because there are more than 120 months
+    _percent_per_milestone = list(itertools.repeat(80,120))
+    _percent_per_milestone.append(400)
+
+    assert len(_percent_per_milestone) == 121
+    assert sum(_percent_per_milestone) == 10_000
+    with brownie.reverts():
+        vesting = VestingContract.deploy(_percent_per_milestone,
+                                        _tokenAddress,
+                                        {"from":legacy_network})  
         
     # reverts because the address is a zero address
+    # _percent_per_milestone = [2000, 4000, 4000]
     # with brownie.reverts():
     #     vesting = VestingContract.deploy(_percent_per_milestone,
     #                                     '0x0000000000000000000000000000000000000000',

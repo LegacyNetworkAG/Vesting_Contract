@@ -1,6 +1,7 @@
 import pytest
 import brownie
 from brownie import accounts, chain, mock_token, VestingContract
+from random import randint
 
 @pytest.fixture
 def tokenContract():
@@ -60,11 +61,11 @@ def test_revertNewMull(tokenContract, vesting):
                                         _tokens_O250I,
                                         _timeLock_O250I,
                                         {"from":legacy_network})
-
+    
     # should revert because addresses and token amounts for O50 mismatch
     tokenContract.transfer(vesting,
                             329*10**18,
-                            {"from": legacy_network})
+                            {"from": legacy_network})# contract has enough funds now
     
     _addresses_O50I = [Alice]
     _addresses_O250I = [Carol, David]
@@ -129,6 +130,7 @@ def test_revertNewMull(tokenContract, vesting):
                                         _tokens_O250I,
                                         _timeLock_O250I,
                                         {"from":legacy_network})
+        
     # should revert because it is not the contract's owner who calls the function
     with brownie.reverts():
         vesting.newMulInvestors(_addresses_O50I,
@@ -137,6 +139,37 @@ def test_revertNewMull(tokenContract, vesting):
                                         _tokens_O250I,
                                         _timeLock_O250I,
                                         {"from":Hacker})
+        
+    # reverts because there are more than 180 addresses
+        #get random 91 O50 addresses and random 90 O250 addresses
+    _addresses_O50I = []
+    for _ in range(91):
+        new_acc = accounts.add()
+        _addresses_O50I.append(new_acc)
+
+    _addresses_O250I = []
+    for _ in range(90):
+        new_acc = accounts.add()
+        _addresses_O250I.append(new_acc)
+        #get random 91 O50 token amounts and random 90 O250 token amounts
+    _tokens_O50I = []
+    for _ in range(91):
+        _tokens_O50I.append(randint(1*10**16, 10*10**16))
+
+    _tokens_O250I = []
+    for _ in range(90):
+        _tokens_O250I.append(randint(1*10**16, 10*10**16))
+
+    assert len( _addresses_O50I) + len( _addresses_O250I) == 181
+    assert len( _tokens_O50I) + len( _tokens_O250I) == 181
+    with brownie.reverts():
+        vesting.newMulInvestors(_addresses_O50I,
+                                        _addresses_O250I,
+                                        _tokens_O50I, 
+                                        _tokens_O250I,
+                                        _timeLock_O250I,
+                                        {"from":legacy_network})
+        
 '''
 Test regular scenarios for newMullInvestors
 &

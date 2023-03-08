@@ -42,8 +42,9 @@ contract VestingContract is Ownable {
 
     // Errors
     error contractLacksFunds(uint256 amountNeeded, uint256 contract_balance);
-    error LockOrCliffNotOver(uint256 currentTime, uint256 vestingStart);
     error addressAmountMismatch(uint256 numAmounts, uint256 numAddresses);
+    error LockOrCliffNotOver(uint256 currentTime, uint256 vestingStart);
+    error inputTooLarge(uint8 intendedVal, uint256 val);
     error addressAlreadyVested(address investorAddress);
     error percSumIncorrect(uint256 percSum);
     error allTokensClaimed();
@@ -85,6 +86,11 @@ contract VestingContract is Ownable {
         uint256 percSum = sumArr(percentPerMilestone_);
         if (percSum != 10_000) {
             revert percSumIncorrect(percSum);
+        }
+
+        // establish a limit of 10 years for vesting period
+        if (percentPerMilestone_.length > 120) {
+            revert inputTooLarge(120, percentPerMilestone_.length);
         }
 
         // percentage of tokens an investor can withdraw at each milestone
@@ -134,6 +140,11 @@ contract VestingContract is Ownable {
 
         if (numO250I != tokensO250I.length) {
             revert addressAmountMismatch(numO250I, addressesO250I.length);
+        }
+
+        // require that the loop is capped at 180 new investors
+        if (tokensO50I.length + tokensO250I.length > 180) {
+            revert inputTooLarge(180, tokensO50I.length + tokensO250I.length);
         }
 
         // create an Investor struct for each investor with less than 50ks
