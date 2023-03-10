@@ -211,6 +211,8 @@ def test_regularNewMull(tokenContract, vesting):
     Bob = accounts[2]
     Carol = accounts[3]
     David = accounts[4]  
+    Eric = accounts[5]
+    Fernanda = accounts[6]
 
     #Fund contract
     tokenContract.transfer(vesting,
@@ -228,7 +230,12 @@ def test_regularNewMull(tokenContract, vesting):
                                         _timeLock_O250I,
                                         {"from":legacy_network})
     
-    # test if it reverts if it tries to add an existing address as a new vester in a separate call
+
+    # should revert if it tries to add an existing address as a new vester in a separate call
+    #Fund contract
+    tokenContract.transfer(vesting,
+                            1*10**18,
+                            {"from": legacy_network})
     _addresses_O50I = [Alice]
     _addresses_O250I = []
     _tokens_O50I = [1*10**18]
@@ -236,6 +243,38 @@ def test_regularNewMull(tokenContract, vesting):
     _timeLock_O250I = 2592000 #1 month lock period
     with brownie.reverts():
         vesting.newMulInvestors(_addresses_O50I,
+                                            _addresses_O250I,
+                                            _tokens_O50I, 
+                                            _tokens_O250I,
+                                            _timeLock_O250I,
+                                            {"from":legacy_network})
+        
+    # should revert if we tried to add more users without sending more tokens to the contract
+    _addresses_O50I = [Eric]
+    _addresses_O250I = [Fernanda]
+    _tokens_O50I = [1*10**18]
+    _tokens_O250I = [10*10**18]
+    _timeLock_O250I = 2592000 #1 month lock period
+    with brownie.reverts():
+        vesting.newMulInvestors(_addresses_O50I,
+                                            _addresses_O250I,
+                                            _tokens_O50I, 
+                                            _tokens_O250I,
+                                            _timeLock_O250I,
+                                            {"from":legacy_network})
+    
+    # should pass if we tried to add more users after sending more tokens to the contract
+    #Fund contract
+    tokenContract.transfer(vesting,
+                            10*10**18,
+                            {"from": legacy_network})
+    _addresses_O50I = [Eric]
+    _addresses_O250I = [Fernanda]
+    _tokens_O50I = [1*10**18]
+    _tokens_O250I = [10*10**18]
+    _timeLock_O250I = 2592000 #1 month lock period
+
+    vesting.newMulInvestors(_addresses_O50I,
                                             _addresses_O250I,
                                             _tokens_O50I, 
                                             _tokens_O250I,
