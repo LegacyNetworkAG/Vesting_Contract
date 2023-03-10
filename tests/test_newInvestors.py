@@ -44,14 +44,17 @@ def test_revertNewInv(tokenContract, vesting):
 
     timeLock = 2592000 #1 month lock period
 
-    # should revert because the Owner doesn't have enough funds
-    amount=1000000*10**18
+    # should revert because the contract lacks funds
+    amount=100*10**18
     with brownie.reverts():
         vesting.newInvestor(amount,
                                 timeLock,
                                 Alice,
                                 {"from":legacy_network})
 
+    tokenContract.transfer(vesting,
+                            100*10**18,
+                            {"from": legacy_network})
     # should revert because it is not the contract's owner who calls the function
     amount=100*10**18
     with brownie.reverts():
@@ -76,6 +79,11 @@ def test_regularNewMull(tokenContract, vesting):
     amount=100*10**18
     timeLock = 2592000 #1 month lock period
 
+    # Fund contract
+    tokenContract.transfer(vesting,
+                            200*10**18,
+                            {"from": legacy_network})
+
     # should pass
     tokenContract.approve(vesting, amount, {"from": legacy_network})
     vesting.newInvestor(amount,
@@ -87,6 +95,11 @@ def test_regularNewMull(tokenContract, vesting):
                                 timeLock,
                                 Bob,
                                 {"from":legacy_network})
+
+    # Fund contract
+    tokenContract.transfer(vesting,
+                            200*10**18,
+                            {"from": legacy_network})
     
     # should revert because the new investor is already vested
     with brownie.reverts():

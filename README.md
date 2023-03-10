@@ -9,7 +9,7 @@
 
 ## newInvestor
 
-- should revert because the Owner doesn't have enough funds
+- should revert because the contract lacks funds
 - should revert because it is not the contract's owner who calls the function
 - regular pass
 - should release all funds to Alice
@@ -26,7 +26,9 @@
 - should revert because it is not the contract's owner who calls the function
 - reverts because there are more than 180 addresses
 - regular pass
-- test if it reverts if it tries to add an existing address as a new vester in a separate call
+- should revert if it tries to add an existing address as a new vester in a separate call
+- should revert if we tried to add more users without sending more tokens to the contract
+- should pass if we tried to add more users after sending more tokens to the contract
 
 ## release
 
@@ -44,7 +46,7 @@ But why do we need to functions to add new investors?
 Because we want 2 things:
 
 1. To be able to add a lot of new investors at once and with only one previous token transaction to the contract;
-2. To add only one user at a time with a concurrent transaction, saving gas relative to the other method
+2. To add only one user at a time with a pervious transaction, saving gas relative to the other method
 
 ## newMullInvestors:
 

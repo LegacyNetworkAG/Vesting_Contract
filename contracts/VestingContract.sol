@@ -126,10 +126,13 @@ contract VestingContract is Ownable {
         // check if the contract has funds for the multiple users the owner wants to add
         uint256 amountNeeded = sumArr(tokensO50I) + sumArr(tokensO250I);
 
-        if (LEGACY_TOKEN.balanceOf(address(this)) < amountNeeded) {
+        if (
+            LEGACY_TOKEN.balanceOf(address(this)) - totalTokensVested <
+            amountNeeded
+        ) {
             revert contractLacksFunds(
                 amountNeeded,
-                LEGACY_TOKEN.balanceOf(address(this))
+                LEGACY_TOKEN.balanceOf(address(this)) - totalTokensVested
             );
         }
 
@@ -261,6 +264,15 @@ contract VestingContract is Ownable {
             revert addressAlreadyVested(newInvestorAddress);
         }
 
+        // check if the contract has funds for the new user the owner wants to add
+        if (
+            LEGACY_TOKEN.balanceOf(address(this)) - totalTokensVested < amount
+        ) {
+            revert contractLacksFunds(
+                amount,
+                LEGACY_TOKEN.balanceOf(address(this)) - totalTokensVested
+            );
+        }
         // create the new Investor struc
         Investor memory investor = Investor(
             0,
@@ -273,9 +285,6 @@ contract VestingContract is Ownable {
 
         // add to the investor array of addresses
         investorAddresses.push(newInvestorAddress);
-
-        // transfer the tokens to the contract
-        LEGACY_TOKEN.safeTransferFrom(msg.sender, address(this), amount);
 
         // update the amount of tokens vested
         totalTokensVested = totalTokensVested + amount;
