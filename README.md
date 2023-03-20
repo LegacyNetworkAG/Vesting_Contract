@@ -63,3 +63,10 @@ to VestingContract.newInvestor(uint256,uint256,address) 0xd8b934580fcE35a11B58C6
 gas 119988 gas
 transaction cost 104337 gas
 execution cost 82613 gas
+
+# Gas
+
+Average gas consumption for the tests
+![Average gas](img/avg_gas.png)
+The worst scenario (adding 180 users at one time using using newMulInvestors) gives
+![Average gas](img/worstCase.png)

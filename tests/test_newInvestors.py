@@ -1,7 +1,10 @@
-import pytest
-import brownie
+from eth_utils.abi import function_abi_to_4byte_selector, collapse_if_tuple
 from brownie import accounts, chain, mock_token, VestingContract
+import brownie
+import pytest
+import json
 
+#SETUP FUNCTIONS
 @pytest.fixture
 def tokenContract():
     # fetch the account
@@ -29,6 +32,25 @@ def vesting(tokenContract):
     print(f"Vesting contract deployed at {vesting}")
     return vesting
 
+#CALLABLE FUNCTIONS
+def encode_custom_error(contract_name, err_name, params):
+    with open("build/Contracts/"+contract_name+".json") as f:
+        info_json = json.load(f)
+    contract_abi = info_json["abi"]
+    for error in [abi for abi in contract_abi if abi["type"] == "error"]:
+        # Get error signature components
+        name = error["name"]
+        data_types = [collapse_if_tuple(abi_input) for abi_input in error.get("inputs", [])]
+        error_signature_hex = function_abi_to_4byte_selector(error).hex()
+        if err_name == name:
+            encoded_params = ''
+            for param in params:
+                if(type(param)==str):
+                    return('typed error: 0x'+error_signature_hex+param[2:].lower().zfill(64))
+                val = "{0:#0{1}x}".format(param,66)
+                val = val[2:]
+                encoded_params = encoded_params + val
+            return('typed error: 0x'+error_signature_hex+encoded_params)
 
 '''
 Test revert scenarios for newInvestor
@@ -55,6 +77,7 @@ def test_revertNewInv(tokenContract, vesting):
     tokenContract.transfer(vesting,
                             100*10**18,
                             {"from": legacy_network})
+    
     # should revert because it is not the contract's owner who calls the function
     amount=100*10**18
     with brownie.reverts():
@@ -64,11 +87,11 @@ def test_revertNewInv(tokenContract, vesting):
                                 {"from":Hacker})
         
 '''
-Test regular scenarios for newMullInvestors
+Test regular scenarios for newInvestors
 &
 Test if it reverts if we try to add an existing vester address in a separate function call
 '''
-def test_regularNewMull(tokenContract, vesting):
+def test_regularNewInv(tokenContract, vesting):
     # Accounts
     legacy_network = accounts[0]
     Alice = accounts[1]
@@ -102,7 +125,8 @@ def test_regularNewMull(tokenContract, vesting):
                             {"from": legacy_network})
     
     # should revert because the new investor is already vested
-    with brownie.reverts():
+    print('---------------\n',encode_custom_error('VestingContract', 'addressAlreadyVested', [Alice.address]))
+    with brownie.reverts(encode_custom_error('VestingContract', 'addressAlreadyVested', [Alice.address])):
         vesting.newInvestor(amount,
                                 timeLock,
                                 Alice,

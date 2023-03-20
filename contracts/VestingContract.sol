@@ -46,7 +46,7 @@ contract VestingContract is Ownable {
     error LockOrCliffNotOver(uint256 currentTime, uint256 vestingStart);
     error inputTooLarge(uint8 intendedVal, uint256 val);
     error addressAlreadyVested(address investorAddress);
-    error invalidAddress(address inputAddress);
+    error invalidAddress();
     error percSumIncorrect(uint256 percSum);
     error allTokensClaimed();
     error notInvestor();
@@ -94,7 +94,7 @@ contract VestingContract is Ownable {
 
         // verify it is not the zero address (avoid locked funds)
         if (token_address_ == address(0)) {
-            revert invalidAddress(token_address_);
+            revert invalidAddress();
         }
 
         // percentage of tokens an investor can withdraw at each milestone
@@ -142,11 +142,11 @@ contract VestingContract is Ownable {
 
         // require that the  number of addresses is equal to the token amounts
         if (numO50I != tokensO50I.length) {
-            revert addressAmountMismatch(numO50I, addressesO50I.length);
+            revert addressAmountMismatch(numO50I, tokensO50I.length);
         }
 
         if (numO250I != tokensO250I.length) {
-            revert addressAmountMismatch(numO250I, addressesO250I.length);
+            revert addressAmountMismatch(numO250I, tokensO250I.length);
         }
 
         // require that the loop is capped at 180 new investors
@@ -170,7 +170,7 @@ contract VestingContract is Ownable {
                 investorAddress == address(0) ||
                 investorAddress == address(this)
             ) {
-                revert invalidAddress(investorAddress);
+                revert invalidAddress();
             }
 
             // create the new Investor struct
@@ -203,7 +203,7 @@ contract VestingContract is Ownable {
                 investorAddress == address(0) ||
                 investorAddress == address(this)
             ) {
-                revert invalidAddress(investorAddress);
+                revert invalidAddress();
             }
 
             // create the new Investor struct

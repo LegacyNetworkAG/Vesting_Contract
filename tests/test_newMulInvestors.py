@@ -1,8 +1,11 @@
-import pytest
-import brownie
+from eth_utils.abi import function_abi_to_4byte_selector, collapse_if_tuple
 from brownie import accounts, chain, mock_token, VestingContract
 from random import randint
+import brownie
+import pytest
+import json
 
+#SETUP FUNCTIONS
 @pytest.fixture
 def tokenContract():
     # fetch the account
@@ -30,6 +33,25 @@ def vesting(tokenContract):
     print(f"Vesting contract deployed at {vesting}")
     return vesting
 
+#CALLABLE FUNCTIONS
+def encode_custom_error(contract_name, err_name, params):
+    with open("build/Contracts/"+contract_name+".json") as f:
+        info_json = json.load(f)
+    contract_abi = info_json["abi"]
+    for error in [abi for abi in contract_abi if abi["type"] == "error"]:
+        # Get error signature components
+        name = error["name"]
+        data_types = [collapse_if_tuple(abi_input) for abi_input in error.get("inputs", [])]
+        error_signature_hex = function_abi_to_4byte_selector(error).hex()
+        if err_name == name:
+            encoded_params = ''
+            for param in params:
+                if(type(param)==str):
+                    return('typed error: 0x'+error_signature_hex+param[2:].lower().zfill(64))
+                val = "{0:#0{1}x}".format(param,66)
+                val = val[2:]
+                encoded_params = encoded_params + val
+            return('typed error: 0x'+error_signature_hex+encoded_params)
 
 '''
 Test revert scenarios for newMullInvestors
@@ -71,7 +93,7 @@ def test_revertNewMull(tokenContract, vesting):
     _addresses_O250I = [Carol, David]
     _tokens_O50I = [10*10**18, 20*10**18]
     _tokens_O250I = [100*10**18, 200*10**18]
-    with brownie.reverts():
+    with brownie.reverts(encode_custom_error('VestingContract', 'addressAmountMismatch', [1, 2])):
         vesting.newMulInvestors(_addresses_O50I,
                                         _addresses_O250I,
                                         _tokens_O50I, 
@@ -84,7 +106,7 @@ def test_revertNewMull(tokenContract, vesting):
     _addresses_O250I = [Carol, David]
     _tokens_O50I = [10*10**18, 20*10**18]
     _tokens_O250I = [100*10**18]
-    with brownie.reverts():
+    with brownie.reverts(encode_custom_error('VestingContract', 'addressAmountMismatch', [2, 1])):
         vesting.newMulInvestors(_addresses_O50I,
                                         _addresses_O250I,
                                         _tokens_O50I, 
@@ -97,7 +119,7 @@ def test_revertNewMull(tokenContract, vesting):
     _addresses_O250I = [Carol, David]
     _tokens_O50I = [10*10**18, 10*10**18, 10*10**18]
     _tokens_O250I = [100*10**18, 200*10**18]
-    with brownie.reverts():
+    with brownie.reverts(encode_custom_error('VestingContract', 'addressAlreadyVested', [Bob.address])):
         vesting.newMulInvestors(_addresses_O50I,
                                         _addresses_O250I,
                                         _tokens_O50I, 
@@ -110,7 +132,7 @@ def test_revertNewMull(tokenContract, vesting):
     _addresses_O250I = [Carol, David, Carol]
     _tokens_O50I = [10*10**18, 20*10**18]
     _tokens_O250I = [100*10**18, 100*10**18, 100*10**18]
-    with brownie.reverts():
+    with brownie.reverts(encode_custom_error('VestingContract', 'addressAlreadyVested', [Carol.address])):
         vesting.newMulInvestors(_addresses_O50I,
                                         _addresses_O250I,
                                         _tokens_O50I, 
@@ -123,7 +145,7 @@ def test_revertNewMull(tokenContract, vesting):
     _addresses_O250I = [Carol, David, Alice]
     _tokens_O50I = [10*10**18, 20*10**18]
     _tokens_O250I = [100*10**18, 100*10**18, 100*10**18]
-    with brownie.reverts():
+    with brownie.reverts(encode_custom_error('VestingContract', 'addressAlreadyVested', [Alice.address])):
         vesting.newMulInvestors(_addresses_O50I,
                                         _addresses_O250I,
                                         _tokens_O50I, 
@@ -166,7 +188,7 @@ def test_revertNewMull(tokenContract, vesting):
 
     assert len( _addresses_O50I) + len( _addresses_O250I) == 181
     assert len( _tokens_O50I) + len( _tokens_O250I) == 181
-    with brownie.reverts():
+    with brownie.reverts(encode_custom_error('VestingContract', 'inputTooLarge', [180, len( _addresses_O50I) + len( _addresses_O250I)])):
         vesting.newMulInvestors(_addresses_O50I,
                                         _addresses_O250I,
                                         _tokens_O50I, 

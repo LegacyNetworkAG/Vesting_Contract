@@ -2,6 +2,7 @@ import pytest
 import brownie
 from brownie import accounts, chain, mock_token, VestingContract
 
+#SETUP FUNCTIONS
 @pytest.fixture
 def tokenContract():
     # fetch the account
@@ -54,7 +55,8 @@ def fundAndVest(tokenContract, vesting):
                                         _tokens_O250I,
                                         _timeLock_O250I,
                                         {"from":legacy_network})
-
+    
+#CALLABLE FUNCTION    
 def get_dict(test_keys, test_values):
     res = {}
     for key in test_keys:
