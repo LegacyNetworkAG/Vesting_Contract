@@ -34,6 +34,7 @@ contract VestingContract is Ownable {
     uint256 public erc20Released; // total amount of released tokens
     uint256 public totalTokensVested;
     uint256 constant SECONDS_IN_MONTH = 30 days;
+    uint256 constant SCALING_FACTOR = 1e18;
     address public immutable TOKEN_ADDRESS; // token address
     bool internal locked; // boolean to prevent reentrancy
 
@@ -329,10 +330,8 @@ contract VestingContract is Ownable {
             // if the time the investor has been vesting is bigger than i month
             if (currentTime > (vestingStart + SECONDS_IN_MONTH * i)) {
                 // for each bracket, claculate the the tokens to be released in that period
-                canRelease =
-                    canRelease +
-                    (tokensPromised * percentPerMilestone[i - 1]) /
-                    10_000; // remember the percent_per
+                canRelease = canRelease + 
+                            ((tokensPromised * percentPerMilestone[i - 1] * SCALING_FACTOR) / 10_000) / SCALING_FACTOR; // remember the percent_per
                 // milestone are percents multiplied by 10_000
             } else {
                 //If the current time is in the middle of one of the months
@@ -344,11 +343,12 @@ contract VestingContract is Ownable {
 
                 canRelease =
                     canRelease +
-                    (tokensPromised *
+                    ((tokensPromised *
                         percentPerMilestone[i - 1] *
-                        secondsInBracket) /
-                    10_000 /
-                    SECONDS_IN_MONTH;
+                        secondsInBracket *
+                        SCALING_FACTOR) /
+                        (10_000 * SECONDS_IN_MONTH
+                    )) / SCALING_FACTOR;
 
                 break;
             }
