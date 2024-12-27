@@ -80,7 +80,7 @@ contract VestingContract is Ownable {
                                                 the indexed month
                                                 */,
         address token_address_ // address of the token to be used
-    ) {
+    ) Ownable(msg.sender) {
         // check if the percentages add up to 100%
         uint256 percSum = sumArr(percentPerMilestone_);
         if (percSum != 10_000) {
